@@ -48,8 +48,6 @@ package sensing
 			_socket.addEventListener(IOErrorEvent.IO_ERROR, handleSocketEvent);
 			_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, handleSocketEvent);
 			_socket.connect(_socketName,_socketPort);	
-			
-			
 		}
 		
 		protected function handleSocketEvent(e:Event):void{

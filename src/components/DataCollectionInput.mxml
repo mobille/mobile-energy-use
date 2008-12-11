@@ -16,7 +16,7 @@
 						<mx:AddChild position="lastChild">
 								<mx:ComboBox id="unitsCombo" editable="true" dataProvider="[kW]" x="619" y="26" height="25"/>
 						</mx:AddChild>
-						<mx:SetProperty target="{radiobutton1}" name="selected" value="true"/>
+						<mx:SetEventHandler target="{button1}" name="click" handler="{recordManual()}"/>
 				</mx:State>
 				<mx:State name="SensorState">
 						<mx:AddChild relativeTo="{button1}" position="before">
@@ -28,13 +28,14 @@
 										</mx:columns>
 								</mx:DataGrid>
 						</mx:AddChild>
-						<mx:SetProperty target="{radiobutton2}" name="selected" value="true"/>
+						<mx:SetEventHandler target="{button1}" name="click" handler="{recordSensors()}"/>
 				</mx:State>
 		</mx:states>
-		<mx:Button label="Record" click="{testEvent()}" x="722" y="4" height="40" width="73" id="button1"/>
+		<mx:Button label="Record" x="722" y="4" height="40" width="73" id="button1"/>
 	
 	<mx:Script>
 		<![CDATA[
+			import sqlite.SQLiteHandler;
 			import sensing.Sensor;
 			
 			[Bindable]
@@ -45,14 +46,31 @@
 			[Bindable]
 			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
 			
+			protected var _sqlLiteHandler:SQLiteHandler = new SQLiteHandler("127.0.0.1",6000);
+			
 			protected function init():void{
 				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, function(e:Event):void{gpsLabel.text = _gpsSensor.currentData as String;}); 
 			}
 			
+			protected function recordManual():void{
+				var t:Object = new Object();
+				t['date'] = _date;
+				if(_gpsSensor.currentData){
+					t['latitude'] = _gpsSensor.currentData.latitude;
+					t['longitude'] = _gpsSensor.currentData.longitude;
+					t['altitude'] = _gpsSensor.currentData.altitude;
+				}	
+				t['sensorName'] = resourceCombo.selectedItem.toString();
+				t['units'] = unitsCombo.selectedItem.toString();
+				t['value'] = valueText.text;  			
+				_sqlLiteHandler.sendTuple(t);
+			}
 			
-			protected function testEvent():void{
-				_gpsSensor.sendData(Math.random().toString());
-				//_gpsSensor._socket.dispatchEvent(new DataEvent(DataEvent.DATA,false,false,"1000,020,4.33423"));
+			protected function recordSensors():void{
+				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
+				
+				//debug
+				_sqlLiteHandler.getTuples(_gpsSensor.currentData.latitude,_gpsSensor.currentData.longitude,new Date(2007,12,5),_date); 
 			}
 			
 			
