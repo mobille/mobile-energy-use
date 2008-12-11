@@ -62,8 +62,8 @@
 			protected var _webAPI:WebAPI = new WebAPI();
 			protected var _vis:Visualization;
 			
-			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/01/2008"), 
-							rangeEnd: new Date("12/03/2008")}];
+			protected var _selectedDateRange:Array = [ {rangeStart: new Date("4/01/2008"), 
+							rangeEnd: new Date("4/03/2008")}];
 
 			/** 
 			 * Toggles between main vis states
@@ -75,7 +75,7 @@
 					
 			protected function init():void{
 				_vis = _flexVisWrapper.visualization;
-				_webAPI.converter = "tab";
+				_webAPI.converter = "json";
 				_webAPI.addEventListener(WebAPIEvent.QUERY_COMPLETE, handleData);
 				
 				_dateChooser.addEventListener(CalendarLayoutChangeEvent.CHANGE,selectDate);
@@ -143,7 +143,7 @@
 				_vis.setAspectRatio(2.4,700);	
 						
 				//Operators
-				_vis.operators.add(new AxisLayout("data.Date String","data.Rate"));
+				_vis.operators.add(new AxisLayout("data.date","data.rate"));
 				(_vis.operators[0] as AxisLayout).yScale.scaleType = "linear";
 				(_vis.operators[0] as AxisLayout).yScale.zeroBased = true;
 								
@@ -229,20 +229,30 @@
 				var outString:String = "";
 				var startDate:Date = (range[0].rangeStart as Date);
 				if(startDate){
-					outString += (startDate.fullYear + "-" + (startDate.monthUTC < 9?"0":"") + (startDate.monthUTC+1) + 
-						"-" + (startDate.dayUTC < 9?"0":"") + startDate.dayUTC);	
+					outString += formatDateForQuery(startDate);
 					outString += "/1";
 				} 
 				return outString +="/";
 				
 			}
 			
+			protected function formatDateForQuery(date:Date):String{
+				return (date.fullYear + "-" + (date.monthUTC < 9?"0":"") + (date.monthUTC+1) + 
+						"-" + (date.dayUTC < 9?"0":"") + date.dayUTC);
+			}
+			
 			
 			protected function loadLineData():void{
 
-				_webAPI.url = "http://dashboard.berkeley.edu/query/"+_buildingCombo.selectedItem.data+"/"
-					+ ((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy") + "/"
-					+ formatDateRangeForQuery(_selectedDateRange) + "csv/";
+				//_webAPI.url = "http://dashboard.berkeley.edu/query/"+_buildingCombo.selectedItem.data+"/"
+				//	+ ((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy") + "/"
+				//	+ formatDateRangeForQuery(_selectedDateRange) + "csv/";
+				_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/readings.json?"+
+					"building={0}&resource={1}&startdate={2}&enddate={3}", 
+					_buildingCombo.selectedItem.data,
+					((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy"),
+					formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
+					formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
 				_webAPI.runQuery();		
 			}
 			
