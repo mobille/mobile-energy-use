@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
+	xmlns:flex="flare.flex.*" width="800" height="400" 
+	horizontalScrollPolicy="off" verticalScrollPolicy="off"
+	currentState="LineChartState" xmlns:local="*" xmlns:components="components.*" 
+	backgroundGradientAlphas="[1.0, 1.0]" backgroundGradientColors="[#000000, #000000]" 
+	xmlns:components1="commentspace.components.*" initialize="{init()}">
+	
+	<mx:states>
+		<mx:State name="MapState" enterState="{initMap()}">
+			<mx:SetProperty target="{visToggleButton}" name="label" value="Line Chart"/>
+		</mx:State>
+		<mx:State name="LineChartState" enterState="{initLineChart()}">
+			<mx:SetStyle target="{_flexVisWrapper}" name="backgroundColor" value="#FFFFFF"/>
+		</mx:State>
+	</mx:states>
+	
+	<flex:FlareVis id="_flexVisWrapper" width="100%" height="100%"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import flare.data.DataSchema;
+			import commentspace.etc.WebAPIEvent;
+			import commentspace.etc.WebAPI;
+			import flare.data.DataSet;
+			import flare.vis.controls.DragControl;
+			import flare.vis.controls.PanZoomControl;
+			import flare.vis.operator.encoder.ShapeEncoder;
+			import mx.events.CalendarLayoutChangeEvent;
+			import mx.events.FlexEvent;
+			import mx.events.DropdownEvent;
+			import mx.controls.Alert;
+			import mx.formatters.SwitchSymbolFormatter;
+			import mx.controls.DateChooser;
+			import mx.events.DateChooserEvent;
+			import flare.util.Strings;
+			import flare.vis.events.TooltipEvent;
+			import flare.vis.controls.ControlList;
+			import flare.vis.operator.OperatorSequence;
+			import flare.vis.operator.OperatorList;
+			import mx.collections.ArrayCollection;
+			import flare.util.palette.ColorPalette;
+			import flare.vis.data.NodeSprite;
+			import flare.vis.operator.filter.VisibilityFilter;
+			import flare.display.TextSprite;
+			import flare.vis.controls.TooltipControl;
+			import flare.util.Colors;
+			import flare.vis.axis.AxisLabel;
+			import flare.vis.operator.encoder.SizeEncoder;
+			import flare.vis.operator.encoder.ColorEncoder;
+			import flare.vis.operator.layout.AxisLayout;
+			import com.modestmaps.core.MapExtent;
+			import flare.vis.controls.MapLayoutPanZoomControl;
+			import flare.data.DataSource;
+			import flare.vis.operator.layout.MapLayout;
+			import flare.vis.Visualization;
+			import flare.vis.data.Data;
+		
+			public const MILLISECONDS_PER_DAY:Number = 24*60*60*1000;
+		
+			//local vars
+			protected var _webAPI:WebAPI = new WebAPI();
+			protected var _vis:Visualization;
+			
+			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/01/2008"), 
+							rangeEnd: new Date("12/03/2008")}];
+
+			/** 
+			 * Toggles between main vis states
+			 */			
+			protected function toggleState():void{
+				currentState = (currentState == "MapState")?"LineChartState":"MapState";
+			}		
+					
+					
+			protected function init():void{
+				_vis = _flexVisWrapper.visualization;
+				_webAPI.converter = "tab";
+				_webAPI.addEventListener(WebAPIEvent.QUERY_COMPLETE, handleData);
+				
+				_dateChooser.addEventListener(CalendarLayoutChangeEvent.CHANGE,selectDate);
+			}		
+			
+			
+			protected function initMap():void{
+				clearVisualization();				
+				_vis.setAspectRatio(2.1,800);	
+				_vis.x = 0;
+				
+				var ml:MapLayout = new MapLayout();
+				ml.xField = "data.lat";
+				ml.yField = "data.lon";
+				ml.desaturated = true;
+				_vis.operators.add(ml);
+				updateVis();
+				ml.xScale.preferredMin = -122.2650;
+				ml.xScale.preferredMax = -122.2439;
+				ml.yScale.preferredMin = 37.870;
+				ml.yScale.preferredMax = 37.882;
+				
+				
+				/*_vis.operators.add(new VisibilityFilter(function(o:Object):Boolean{
+							return((o.data["name"] == _buildingCombo.selectedItem || _buildingCombo.selectedItem == null)
+								&&(o.data["resourceType_id"] == 1 || o.data["resourceType_id"] == 2));
+								return true;
+						}));*/
+				//_vis.operators.add(new SizeEncoder("data.rate"));
+				//_vis.operators.add(new ColorEncoder("data.resourceType_id",Data.NODES,"lineColor",null, new ColorPalette(ColorPalette.CATEGORY_COLORS_10)));
+
+				//Controls
+				var mlc:MapLayoutPanZoomControl = new MapLayoutPanZoomControl();
+				mlc.useControls = true;
+				_vis.controls.add(mlc);
+				
+				var ttc:TooltipControl  = new TooltipControl(NodeSprite,null,updateMapTip,updateMapTip);
+				TextSprite(ttc.tooltip).text = "Tooltip Text";
+				_vis.controls.add(ttc);
+				
+				
+				//Defaults
+				_vis.data.nodes.setProperty("alpha",0.5);
+				_vis.data.nodes.setProperty("shape","circle");
+				_vis.data.nodes.setProperty("fillColor",Colors.rgba(200,200,255,0.5));
+				_vis.data.nodes.setProperty("lineWidth",2);
+				
+				loadMapData();	
+			}
+			
+			
+			protected function updateMapTip(e:TooltipEvent):void{
+				TextSprite(e.tooltip).htmlText = Strings.format(
+					"<b>{0}</b><br/>{1}: {2} {3}  ",
+					e.node.data["name"],
+					e.node.data["displayName"],
+					e.node.data["rate"],
+					e.node.data["rateUnits"]);
+			}
+			
+			protected function initLineChart():void{
+				clearVisualization();
+				_vis.x = 80;
+				_vis.y = 10;
+				_vis.setAspectRatio(2.4,700);	
+						
+				//Operators
+				_vis.operators.add(new AxisLayout("data.Date String","data.Rate"));
+				(_vis.operators[0] as AxisLayout).yScale.scaleType = "linear";
+				(_vis.operators[0] as AxisLayout).yScale.zeroBased = true;
+								
+				//Defaults
+				_vis.data.nodes.setDefault("shape","verticalBar");
+				_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
+				_vis.data.nodes.setDefault("lineAlpha",0);
+				
+				loadLineData();
+			}
+			
+			
+			protected function clearVisualization():void{
+				//Data
+				_vis.data.clear();
+				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0);  
+				
+				
+				_vis.data.nodes.clearDefaults();
+						
+				//Operators
+				_vis.operators.clear();
+				
+				//Controls
+				_vis.controls.clear();
+				
+				//_vis = new Visualization();
+				//_flexVisWrapper.visualization = _vis;
+				
+			}
+			
+				public const RESOURCE_TYPES:Array = [{label:"Energy",data:"energy"},
+				{label:"Steam",data:"steam"},
+				{label:"Water",data:"water"}];
+				public const BUILDING_NAMES:Array = [{label:"Cory Hall",data:55},
+					{label:"Koshland Hall",data:142},
+					{label:"Life Sciences Addition",data:24},
+					{label:"Silver Lab Addition",data:160},
+					{label:"Soda Hall",data:31},
+					{label:"Tan Hall",data:153},
+					{label:"Wurster Hall",data:143}];
+				public const DATE_RANGES:Array = ["Day","Week","Year","All Time"];
+				
+				
+				
+				protected var _currentDate:Date = new Date();
+				[Bindable]
+				protected var _resourceTypes:ArrayCollection = new ArrayCollection(RESOURCE_TYPES);
+				[Bindable]
+				protected var _buildingNames:ArrayCollection = new ArrayCollection(BUILDING_NAMES);
+				[Bindable] 
+				protected var _dateRanges:ArrayCollection = new ArrayCollection(DATE_RANGES);
+								
+				protected function selectDate(de:CalendarLayoutChangeEvent):void{
+				var clickedDate:Date = (de.target as DateField).dropdown.selectedDate;
+				switch(_dateRangeCombo.selectedLabel){
+					case "Week":
+						var dayOfWeek:Number = clickedDate.day;
+						_selectedDateRange = [ {rangeStart: new Date(clickedDate.time-dayOfWeek*MILLISECONDS_PER_DAY), 
+							rangeEnd: new Date(clickedDate.time+(6-dayOfWeek)*MILLISECONDS_PER_DAY)}];
+						break;
+					case "Year":
+						_selectedDateRange = [ {rangeStart: new Date(clickedDate.fullYear,0), rangeEnd: new Date(clickedDate.fullYear,11,31)}]; 
+						break;
+					case "All Time":
+						_selectedDateRange = [ {rangeStart: new Date(1970,0,0), rangeEnd: new Date(_currentDate.fullYear,11,31)}];
+						break;
+					case "Day":
+						_selectedDateRange = [ {rangeStart: clickedDate, rangeEnd: new Date(clickedDate.time + MILLISECONDS_PER_DAY)}];
+						
+					default:
+						break;
+				}
+				if(_selectedDateRange){
+					_dateChooser.dropdown.selectedRanges = _selectedDateRange;
+					loadLineData();
+				}
+				
+			}
+			
+			protected function formatDateRangeForQuery(range:Array):String{
+				//FIXME:This won't work for large ranges
+				var outString:String = "";
+				var startDate:Date = (range[0].rangeStart as Date);
+				if(startDate){
+					outString += (startDate.fullYear + "-" + (startDate.monthUTC < 9?"0":"") + (startDate.monthUTC+1) + 
+						"-" + (startDate.dayUTC < 9?"0":"") + startDate.dayUTC);	
+					outString += "/1";
+				} 
+				return outString +="/";
+				
+			}
+			
+			
+			protected function loadLineData():void{
+
+				_webAPI.url = "http://dashboard.berkeley.edu/query/"+_buildingCombo.selectedItem.data+"/"
+					+ ((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy") + "/"
+					+ formatDateRangeForQuery(_selectedDateRange) + "csv/";
+				_webAPI.runQuery();		
+			}
+			
+			protected function loadMapData():void{
+				_webAPI.url = "http://www.eecs.berkeley.edu/~willettw/other/dash_meter_test_data.tab.txt";
+				_webAPI.runQuery();	
+			}
+			
+			protected function handleData(e:Event):void{
+				var d:DataSet = e.currentTarget.data;
+				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
+				_vis.data.clear();
+				
+				for each(var o:Object in d.nodes.data){
+					_vis.data.addNode(o);
+				} 
+				updateVis();
+			}
+			
+			
+			protected function updateVis():void{
+				if(_vis){
+					_vis.update();
+				}
+			}
+			
+			
+		]]>
+	</mx:Script>
+	<mx:Style source="css/MobileCSS.css"/>
+	<mx:VBox width="100%" bottom="0" verticalGap="2" id="vbox1">
+		<mx:HBox width="100%">
+			<mx:Spacer/>
+			<mx:Button label="Map" labelPlacement="top" id="visToggleButton" click="{toggleState()}"/>
+			<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" valueCommit="{loadLineData()}"/>
+			<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" valueCommit="{loadLineData()}"/>
+			<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" valueCommit="{loadLineData()}"/>
+			<mx:DateField id="_dateChooser" showToday="true"/>
+		</mx:HBox>
+		<components:ControlContainer panelName="^">
+			<components:subComponents>
+				<components:ControlContainer panelName="Data Recording">
+					<components:subComponents>
+						<components:DataCollectionInput id="dataPane"/>
+					</components:subComponents>
+				</components:ControlContainer>
+				<components:ControlContainer panelName="Comment on Data">
+					<components:subComponents>
+						<components1:CommentPane width="100%" height="150" id="commentsPane"/>
+					</components:subComponents>
+				</components:ControlContainer>
+			</components:subComponents>
+		</components:ControlContainer>
+	</mx:VBox>
+	
+</mx:Application>

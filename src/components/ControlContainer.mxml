@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" 
+	creationComplete="{addComponents()}" currentState="collapsedState" backgroundColor="#3C3C3C" backgroundAlpha=".8" borderStyle="solid" cornerRadius="5" borderColor="#3C3C3C" width="100%">
+	<mx:states>
+		<mx:State name="collapsedState">
+			<mx:SetProperty target="{subComponentsBox}" name="includeInLayout" value="false"/>
+			<mx:SetProperty target="{subComponentsBox}" name="visible" value="false"/>
+			<mx:SetEventHandler target="{button}" name="click" handler="{currentState=&quot;expandedState&quot;}"/>
+			<mx:SetProperty target="{button}" name="label" value="{panelName}"/>
+		</mx:State>
+		<mx:State name="expandedState">
+			<mx:SetEventHandler target="{button}" name="click" handler="{currentState=&quot;collapsedState&quot;}"/>
+			<mx:SetProperty target="{button}" name="label" value="{panelName}"/>
+			<mx:SetStyle target="{subComponentsBox}" name="verticalGap" value="0"/>
+			<mx:SetProperty target="{subComponentsBox}" name="verticalScrollPolicy" value="off"/>
+			<mx:SetProperty target="{subComponentsBox}" name="horizontalScrollPolicy" value="off"/>
+			<mx:SetProperty name="verticalScrollPolicy" value="off"/>
+			<mx:SetProperty name="horizontalScrollPolicy" value="off"/>
+			
+		</mx:State>
+	</mx:states>
+	
+	<mx:Metadata>
+		[DefaultProperty("subComponents")]
+	</mx:Metadata>
+	
+	<mx:VBox id="subComponentsBox" width="100%" height="100%" backgroundAlpha="0.0" horizontalGap="0" paddingBottom="0" paddingTop="0" y="{button.height}"/>	
+	<mx:Button x="0" label="^" width="100%" id="button" 
+		toolTip="{panelName}" styleName="ContainerButtons" alpha=".8"/>
+	
+	
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			public var panelName:String;
+			
+			//------------------ Templating code for MXML SubComponents------------------------------
+			
+			protected var _subComponents:Array;
+			
+		    public function set subComponents(c:Array):void{
+		     	_subComponents = c;
+		    }
+		    
+		    protected function addComponents():void{
+		     	if(_subComponents != null){
+			    	for(var i:int=0; i < _subComponents.length; i++) subComponentsBox.addChild(_subComponents[i]);
+		     	}
+			}
+		]]>
+	</mx:Script>	
+	
+	
+	
+</mx:Canvas>

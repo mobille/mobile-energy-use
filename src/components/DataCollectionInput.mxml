@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" initialize="init()" width="800">
+		<mx:states>
+				<mx:State name="ManualEntryState">
+						<mx:AddChild relativeTo="{button1}" position="before">
+								<mx:FormItem label="Resource" id="formitem2" x="471">
+										<mx:ComboBox editable="true" id="resourceCombo" dataProvider="[light level, meter reading, temperature]" height="25"></mx:ComboBox>
+								</mx:FormItem>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:TextInput id="valueText" x="511" height="25" bottom="0" width="100"/>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:Label text="Value" x="467" bottom="0"/>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:ComboBox id="unitsCombo" editable="true" dataProvider="[kW]" x="619" y="26" height="25"/>
+						</mx:AddChild>
+						<mx:SetProperty target="{radiobutton1}" name="selected" value="true"/>
+				</mx:State>
+				<mx:State name="SensorState">
+						<mx:AddChild relativeTo="{button1}" position="before">
+								<mx:DataGrid showHeaders="false" dataProvider="{_arduinoSensor.currentData}" height="50" width="348" x="371">
+										<mx:columns>
+												<mx:DataGridColumn dataField="resource"/>
+												<mx:DataGridColumn dataField="value"/>
+												<mx:DataGridColumn dataField="units"/>
+										</mx:columns>
+								</mx:DataGrid>
+						</mx:AddChild>
+						<mx:SetProperty target="{radiobutton2}" name="selected" value="true"/>
+				</mx:State>
+		</mx:states>
+		<mx:Button label="Record" click="{testEvent()}" x="722" y="4" height="40" width="73" id="button1"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import sensing.Sensor;
+			
+			[Bindable]
+			protected var _date:Date = new Date();
+			
+			[Bindable ]
+			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",5000);
+			[Bindable]
+			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
+			
+			protected function init():void{
+				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, function(e:Event):void{gpsLabel.text = _gpsSensor.currentData as String;}); 
+			}
+			
+			
+			protected function testEvent():void{
+				_gpsSensor.sendData(Math.random().toString());
+				//_gpsSensor._socket.dispatchEvent(new DataEvent(DataEvent.DATA,false,false,"1000,020,4.33423"));
+			}
+			
+			
+		]]>
+	</mx:Script>
+	<mx:RadioButton label="Attached Sensors" groupName="sourceGroup" id="radiobutton2" value="SensorState" x="10"/>
+	<mx:RadioButton label="Manual Entry" groupName="sourceGroup" id="radiobutton1" value="ManualEntryState" x="10" y="23"/>
+	<mx:RadioButtonGroup id="sourceGroup" change="{currentState = sourceGroup.selectedValue as String}"/>
+	<mx:Label text="{_date.toTimeString()}"  x="169" y="0"/>
+	<mx:Label id="gpsLabel" text="{_gpsSensor.currentData?_gpsSensor.currentData:'No GPS Data Available'}" color="#DDDDDD" x="169" y="23"/>
+	<mx:VRule x="154" y="5" width="1" height="36"/>
+	
+</mx:Canvas>

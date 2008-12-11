@@ -1,0 +1,41 @@
+/* CSS file */
+TextInput
+{
+	color: #3D3D3D;
+}
+List
+{
+	color: #3D3D3D;
+}
+ComboBox
+{
+	color: #D5D5D5;
+}
+RadioButton
+{
+	fillAlphas: 1.0, 1.0;
+	fillColors: #727272, #727272;
+}
+global
+{
+	color: #CDCDCD;
+	fillAlphas: 1.0, 1.0;
+	fillColors: #0F0F0F, #434343;
+	textRollOverColor: #DFDFDF;
+	fontSize: 12;
+	paddingTop: 1;
+	paddingBottom: 1;
+	backgroundGradientAlphas: 1.0, 1.0;
+	backgroundGradientColors: #000000, #000000;
+	disabledColor: #768181;
+}
+Button.ContainerButtons
+{
+	fontSize: 10;
+	fontFamily: Verdana;
+	horizontalGap: 0;
+	paddingLeft: 4;
+	paddingRight: 4;
+	paddingTop: 0;
+	paddingBottom: 0;
+}
