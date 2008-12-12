@@ -43,7 +43,7 @@
 			protected var _date:Date = new Date();
 			
 			[Bindable ]
-			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",5000);
+			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",6000);
 			public function get gpsData():Object{ return _gpsSensor.currentData};
 			[Bindable]
 			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
