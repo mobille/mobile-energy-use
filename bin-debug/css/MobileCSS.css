@@ -9,7 +9,17 @@ List
 }
 ComboBox
 {
-	color: #D5D5D5;
+	color: #000000;
+	borderColor: #FFFFFF;
+	fontSize: 17;
+	fillColors: #FFFFFF, #FFFFFF;
+	fontWeight: bold;
+	paddingRight: 0;
+	paddingLeft: 0;
+	arrowButtonWidth: 10;
+	paddingBottom: 0;
+	paddingTop: 0;
+	cornerRadius: 0;
 }
 RadioButton
 {
@@ -22,12 +32,13 @@ global
 	fillAlphas: 1.0, 1.0;
 	fillColors: #0F0F0F, #434343;
 	textRollOverColor: #DFDFDF;
-	fontSize: 12;
+	fontSize: 16;
 	paddingTop: 1;
 	paddingBottom: 1;
 	backgroundGradientAlphas: 1.0, 1.0;
 	backgroundGradientColors: #000000, #000000;
 	disabledColor: #768181;
+	leading: 2;
 }
 Button.ContainerButtons
 {

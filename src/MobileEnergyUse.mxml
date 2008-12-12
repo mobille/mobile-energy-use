@@ -12,13 +12,47 @@
 		</mx:State>
 		<mx:State name="LineChartState" enterState="{initLineChart()}">
 			<mx:SetStyle target="{_flexVisWrapper}" name="backgroundColor" value="#FFFFFF"/>
+			<mx:SetStyle name="backgroundGradientColors" value="[#FFFFFF, #FFFFFF]"/>
+			<mx:SetStyle target="{hbox1}" name="horizontalGap" value="2"/>
 		</mx:State>
 	</mx:states>
 	
-	<flex:FlareVis id="_flexVisWrapper" width="100%" height="100%"/>
+	<mx:HBox width="100%" verticalAlign="middle" y="0" id="hbox1">
+			<mx:Spacer/>
+			<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" change="{selectDate()}"/>
+			<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" change="{loadData()}"/>
+			<mx:Label text="in" fontSize="17" fontWeight="bold" color="#000000"/>
+			<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" selectedIndex="1"
+				change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData()}"/>
+			<mx:HBox id="distanceBox" visible='false' includeInLayout="false">
+				<mx:Label text="Distance" fontSize="17"/>
+				<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
+					tickInterval="1" change="{loadData()}"/>
+			</mx:HBox>
+			<mx:Label text="{dateForTop(_selectedDateRange[0])}" fontSize="17" fontWeight="bold" color="#000000" click="{_dateChooser.open()}"/>
+			<mx:DateField id="_dateChooser"  width="17" displayedYear="2007" displayedMonth="12"/>
+			<mx:Button label="Map" labelPlacement="top" id="visToggleButton" click="{toggleState()}"/>
+		</mx:HBox>
+	<flex:FlareVis id="_flexVisWrapper" y="35" width="100%" height="100%"/>	
+	
+	<components:ControlContainer width="100%" bottom="0">
+		<components:subComponents>
+			<components:ControlContainer panelName="Data Recording">
+				<components:subComponents>
+					<components:DataCollectionInput id="dataPane"/>
+				</components:subComponents>
+			</components:ControlContainer>
+			<components:ControlContainer panelName="Comment on Data">
+				<components:subComponents>
+					<components1:CommentPane width="100%" height="150" id="commentsPane"/>
+				</components:subComponents>
+			</components:ControlContainer>
+		</components:subComponents>
+	</components:ControlContainer>
 	
 	<mx:Script>
 		<![CDATA[
+			import flare.util.Strings;
 			import sensing.Sensor;
 			import sqlite.SQLiteHandler;
 			import flare.data.DataSchema;
@@ -65,8 +99,9 @@
 			protected var _localDB:SQLiteHandler = SQLiteHandler.instance;
 			protected var _vis:Visualization;
 			
-			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/12/2007"), 
-							rangeEnd: new Date("12/13/2007")}];
+			[Bindable]
+			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/14/2007"), 
+							rangeEnd: new Date("12/15/2007")}];
 			protected var _currentLocation:Object;
 
 
@@ -84,6 +119,7 @@
 				_webAPI.addEventListener(WebAPIEvent.QUERY_COMPLETE, handleData);
 				
 				//Listen for changes to the calendar to set the date range
+				_dateChooser.dropdown.selectedRanges = _selectedDateRange;
 				_dateChooser.addEventListener(CalendarLayoutChangeEvent.CHANGE,selectDate);
 				
 				//listen for events from the datapane to get sensor updates.
@@ -112,14 +148,6 @@
 				ml.yScale.preferredMin = 37.870;
 				ml.yScale.preferredMax = 37.882;
 				
-				
-				/*_vis.operators.add(new VisibilityFilter(function(o:Object):Boolean{
-							return((o.data["name"] == _buildingCombo.selectedItem || _buildingCombo.selectedItem == null)
-								&&(o.data["resourceType_id"] == 1 || o.data["resourceType_id"] == 2));
-								return true;
-						}));*/
-				//_vis.operators.add(new SizeEncoder("data.rate"));
-				//_vis.operators.add(new ColorEncoder("data.resourceType_id",Data.NODES,"lineColor",null, new ColorPalette(ColorPalette.CATEGORY_COLORS_10)));
 
 				//Controls
 				var mlc:MapLayoutPanZoomControl = new MapLayoutPanZoomControl();
@@ -137,7 +165,7 @@
 				_vis.data.nodes.setProperty("fillColor",Colors.rgba(200,200,255,0.5));
 				_vis.data.nodes.setProperty("lineWidth",2);
 				
-				loadMapData();	
+				loadData();
 			}
 			
 			
@@ -150,6 +178,11 @@
 					e.node.data["rateUnits"]);
 			}
 			
+			
+			/**
+			 * Set up the visualization as a line chart.
+			 * 
+			 */
 			protected function initLineChart():void{
 				clearVisualization();
 				_vis.x = 80;
@@ -169,12 +202,13 @@
 				//Defaults
 				//_vis.data.nodes.setDefault("shape","verticalBar");
 				_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
+				_vis.data.edges.setDefault("lineColor",Colors.rgba(50,50,250,200));
 				_vis.data.nodes.setDefault("lineAlpha",0);
-				_vis.data.nodes.setDefault("size",0.5);
-				_vis.data.edges.setDefault("lineWidth",3);
+				_vis.data.nodes.setDefault("size",0.4);
+				_vis.data.edges.setDefault("lineWidth",4);
 				_vis.data.edges.setDefault("lineAlpha",0.8);
 				
-				loadLineData();
+				loadData();
 			}
 			
 			protected function updatePlotTip(e:TooltipEvent):void{
@@ -203,9 +237,9 @@
 				
 			}
 			
-				public const RESOURCE_TYPES:Array = [{label:"Energy",data:"energy"},
-				{label:"Steam",data:"steam"},
-				{label:"Water",data:"water"}];
+				public const RESOURCE_TYPES:Array = [{label:"Energy Use",data:"energy"},
+				{label:"Steam Use",data:"steam"},
+				{label:"Water Use",data:"water"}];
 				public const BUILDING_NAMES:Array = [
 					{label:"Mobile Data",data:-1},
 					{label:"Cory Hall",data:55},
@@ -215,7 +249,7 @@
 					{label:"Soda Hall",data:31},
 					{label:"Tan Hall",data:153},
 					{label:"Wurster Hall",data:143}];
-				public const DATE_RANGES:Array = ["Day","Week","Year","All Time"];
+				public const DATE_RANGES:Array = ["Daily","Weekly","Yearly","All Time"];
 				
 				
 				
@@ -227,21 +261,22 @@
 				[Bindable] 
 				protected var _dateRanges:ArrayCollection = new ArrayCollection(DATE_RANGES);
 								
-				protected function selectDate(de:CalendarLayoutChangeEvent):void{
-				var clickedDate:Date = (de.target as DateField).dropdown.selectedDate;
+				protected function selectDate(de:Event=null):void{
+				var clickedDate:Date = (_dateChooser.dropdown.selectedDate ? _dateChooser.dropdown.selectedDate : _selectedDateRange[0].rangeStart);;
+				
 				switch(_dateRangeCombo.selectedLabel){
-					case "Week":
+					case "Weekly":
 						var dayOfWeek:Number = clickedDate.day;
 						_selectedDateRange = [ {rangeStart: new Date(clickedDate.time-dayOfWeek*MILLISECONDS_PER_DAY), 
 							rangeEnd: new Date(clickedDate.time+(6-dayOfWeek)*MILLISECONDS_PER_DAY)}];
 						break;
-					case "Year":
+					case "Yearly":
 						_selectedDateRange = [ {rangeStart: new Date(clickedDate.fullYear,0), rangeEnd: new Date(clickedDate.fullYear,11,31)}]; 
 						break;
 					case "All Time":
 						_selectedDateRange = [ {rangeStart: new Date(1970,0,0), rangeEnd: new Date(_currentDate.fullYear,11,31)}];
 						break;
-					case "Day":
+					case "Daily":
 						_selectedDateRange = [ {rangeStart: clickedDate, rangeEnd: new Date(clickedDate.time + MILLISECONDS_PER_DAY)}];
 						
 					default:
@@ -249,30 +284,39 @@
 				}
 				if(_selectedDateRange){
 					_dateChooser.dropdown.selectedRanges = _selectedDateRange;
-					loadLineData();
+					loadData();
 				}
 				
 			}
 			
-			protected function formatDateRangeForQuery(range:Array):String{
-				//FIXME:This won't work for large ranges
-				var outString:String = "";
-				var startDate:Date = (range[0].rangeStart as Date);
-				if(startDate){
-					outString += formatDateForQuery(startDate);
-					outString += "/1";
-				} 
-				return outString +="/";
-				
+			protected function dateForTop(dateRange:Object):String{
+				var start:Date = (dateRange.rangeStart as Date);
+				var end:Date = (dateRange.rangeEnd as Date);
+				switch(_dateRangeCombo.selectedLabel){
+					case "Weekly":
+						return Strings.format("{0:d}-{1:d}",start,end);
+						break;
+					case "Yearly":
+						return start.fullYear.toString();
+						break;
+					case "All Time":
+						return "";
+						break;
+					case "Daily":
+					default:
+						return start.toDateString();
+						break;
+				}
 			}
 			
-			protected function formatDateForQuery(date:Date):String{
-				return (date.fullYear + "-" + (date.monthUTC < 9?"0":"") + (date.monthUTC+1) + 
-						"-" + (date.dayUTC < 9?"0":"") + date.dayUTC);
-			}
-			
-			
-			protected function loadLineData():void{
+			/**
+			 * Main data loading method for the application. Loads data from either the local or 
+			 * web database and queries for data appropriate to the current visualization.
+			 * 
+			 * 
+			 * 
+			 */
+			protected function loadData():void{
 				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
 					if(dataPane.gpsData){
 						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange.rangestart, 
@@ -291,10 +335,11 @@
 				}
 			}
 			
-			protected function loadMapData():void{
-				_webAPI.url = "http://www.eecs.berkeley.edu/~willettw/other/dash_meter_test_data.tab.txt";
-				_webAPI.runQuery();	
+			protected function formatDateForQuery(date:Date):String{
+				return (date.fullYear + "-" + (date.monthUTC < 9?"0":"") + (date.monthUTC+1) + 
+						"-" + (date.dateUTC < 9?"0":"") + date.dateUTC);
 			}
+			
 			
 			protected function handleData(e:Event):void{
 				var d:DataSet = e.currentTarget.data;
@@ -324,35 +369,6 @@
 		]]>
 	</mx:Script>
 	<mx:Style source="css/MobileCSS.css"/>
-	<mx:VBox width="100%" bottom="0" verticalGap="2" id="vbox1">
-		<mx:HBox width="100%">
-			<mx:Spacer/>
-			<mx:Button label="Map" labelPlacement="top" id="visToggleButton" click="{toggleState()}"/>
-			<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" 
-				change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadLineData()}"/>
-			<mx:HBox id="distanceBox" visible='false' includeInLayout="false">
-				<mx:Label text="Distance"/>
-				<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
-					tickInterval="1" change="{loadLineData()}"/>
-			</mx:HBox>
-			<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" change="{loadLineData()}"/>
-			<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" change="{loadLineData()}"/>
-			<mx:DateField id="_dateChooser" showToday="true" width="17"/>
-		</mx:HBox>
-		<components:ControlContainer panelName="^">
-			<components:subComponents>
-				<components:ControlContainer panelName="Data Recording">
-					<components:subComponents>
-						<components:DataCollectionInput id="dataPane"/>
-					</components:subComponents>
-				</components:ControlContainer>
-				<components:ControlContainer panelName="Comment on Data">
-					<components:subComponents>
-						<components1:CommentPane width="100%" height="150" id="commentsPane"/>
-					</components:subComponents>
-				</components:ControlContainer>
-			</components:subComponents>
-		</components:ControlContainer>
-	</mx:VBox>
+	
 	
 </mx:Application>

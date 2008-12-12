@@ -3,24 +3,25 @@
 		<mx:states>
 				<mx:State name="ManualEntryState">
 						<mx:AddChild relativeTo="{button1}" position="before">
-								<mx:FormItem label="Resource" id="formitem2" x="471">
-										<mx:ComboBox editable="true" id="resourceCombo" dataProvider="[light level, meter reading, temperature]" height="25"></mx:ComboBox>
+								<mx:FormItem label="Resource" id="formitem2" x="429">
+										<mx:ComboBox editable="true" id="resourceCombo" dataProvider="[light level, meter reading, temperature]"></mx:ComboBox>
 								</mx:FormItem>
 						</mx:AddChild>
 						<mx:AddChild position="lastChild">
-								<mx:TextInput id="valueText" x="511" height="25" bottom="0" width="100"/>
+								<mx:TextInput id="valueText" x="516" bottom="0" width="100"/>
 						</mx:AddChild>
 						<mx:AddChild position="lastChild">
-								<mx:Label text="Value" x="467" bottom="0"/>
+								<mx:Label text="Value" x="458" bottom="0"/>
 						</mx:AddChild>
 						<mx:AddChild position="lastChild">
-								<mx:ComboBox id="unitsCombo" editable="true" dataProvider="[kW]" x="619" y="26" height="25"/>
+								<mx:ComboBox id="unitsCombo" editable="true" dataProvider="[kW]" x="619" y="33"/>
 						</mx:AddChild>
 						<mx:SetEventHandler target="{button1}" name="click" handler="{recordManual()}"/>
+						<mx:SetProperty target="{button1}" name="height" value="60"/>
 				</mx:State>
 				<mx:State name="SensorState">
 						<mx:AddChild relativeTo="{button1}" position="before">
-								<mx:DataGrid showHeaders="false" dataProvider="{_arduinoSensor.currentData}" height="50" width="348" x="371">
+								<mx:DataGrid showHeaders="false" dataProvider="{_arduinoSensor.currentData}" height="50" width="348" x="348">
 										<mx:columns>
 												<mx:DataGridColumn dataField="resource"/>
 												<mx:DataGridColumn dataField="value"/>
@@ -31,7 +32,7 @@
 						<mx:SetEventHandler target="{button1}" name="click" handler="{recordSensors()}"/>
 				</mx:State>
 		</mx:states>
-		<mx:Button label="Record" x="722" y="4" height="40" width="73" id="button1"/>
+		<mx:Button label="Record" x="701" y="2" height="48" width="97" id="button1"/>
 	
 	<mx:Script>
 		<![CDATA[
@@ -82,11 +83,11 @@
 			
 		]]>
 	</mx:Script>
-	<mx:RadioButton label="Attached Sensors" groupName="sourceGroup" id="radiobutton2" value="SensorState" x="10"/>
+	<mx:RadioButton label="Sensors" groupName="sourceGroup" id="radiobutton2" value="SensorState" x="10"/>
 	<mx:RadioButton label="Manual Entry" groupName="sourceGroup" id="radiobutton1" value="ManualEntryState" x="10" y="23"/>
 	<mx:RadioButtonGroup id="sourceGroup" change="{currentState = sourceGroup.selectedValue as String}"/>
 	<mx:Label text="{_date.toTimeString()}"  x="169" y="0"/>
 	<mx:Label id="gpsLabel" text="{_gpsSensor.currentData?_gpsSensor.currentData:'No GPS Data Available'}" color="#DDDDDD" x="169" y="23"/>
-	<mx:VRule x="154" y="5" width="1" height="36"/>
+	<mx:VRule x="154" y="5" width="1" height="40"/>
 	
 </mx:Canvas>
