@@ -60,7 +60,6 @@
 			}
 			
 			protected function recordManual():void{
-				Alert.show("Button pressed");
 				var t:Object = new Object();
 				t['date'] = _date;
 				if(_gpsSensor.currentData){
@@ -74,7 +73,6 @@
 				t['sensorName'] = resourceCombo.selectedItem.toString();
 				t['units'] = unitsCombo.selectedItem.toString();
 				t['value'] = valueText.text;  			
-				Alert.show("Send to socket:"+t.toLocaleString());
 				_sqlLiteHandler.sendTuple(t);
 			}
 			

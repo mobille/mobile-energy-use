@@ -66,7 +66,7 @@ package sqlite
 		public function sendData(s:String):void{
 			if(_socket.connected){
 				_socket.send(s);
-				Alert.show("Message (\"" + s + "\") sent to " + _socketName + ":" + _socketPort);
+				//Alert.show("Message (\"" + s + "\") sent to " + _socketName + ":" + _socketPort);
 			} 
 			else Alert.show("Socket not connected");
 		}
@@ -92,7 +92,7 @@ package sqlite
 			vals = ("("+vals+")");
 			
 			sqlString += (cols + " VALUES " + vals);
-			Alert.show("calling send method with string:" + sqlString);
+			//Alert.show("calling send method with string:" + sqlString);
 			sendData(sqlString);
 		}
 			
