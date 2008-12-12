@@ -36,6 +36,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.controls.Alert;
 			import sqlite.SQLiteHandler;
 			import sensing.Sensor;
 			
@@ -59,6 +60,7 @@
 			}
 			
 			protected function recordManual():void{
+				Alert.show("Button pressed");
 				var t:Object = new Object();
 				t['date'] = _date;
 				if(_gpsSensor.currentData){
@@ -69,10 +71,12 @@
 				t['sensorName'] = resourceCombo.selectedItem.toString();
 				t['units'] = unitsCombo.selectedItem.toString();
 				t['value'] = valueText.text;  			
+				Alert.show("Send to socket:"+t.toLocaleString());
 				_sqlLiteHandler.sendTuple(t);
 			}
 			
 			protected function recordSensors():void{
+				Alert.show("Button pressed - now send to socket");
 				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
 				
 				//debug
