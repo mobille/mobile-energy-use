@@ -69,7 +69,10 @@ package sensing
 		
 		
 		public function sendData(s:String):void{
-			if(_socket.connected) _socket.send(s);
+			if(_socket.connected){ 
+				_socket.send(s);
+				Alert.show("Message (\"" + s + "\") sent to " + _socketName + ":" + _socketPort);
+			}
 			else Alert.show("Socket not connected");
 		}
 		

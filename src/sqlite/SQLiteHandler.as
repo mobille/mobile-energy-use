@@ -64,7 +64,10 @@ package sqlite
 		 * 
 		 */		
 		public function sendData(s:String):void{
-			if(_socket.connected) _socket.send(s);
+			if(_socket.connected){
+				_socket.send(s);
+				Alert.show("Message (\"" + s + "\") sent to " + _socketName + ":" + _socketPort);
+			} 
 			else Alert.show("Socket not connected");
 		}
 		
@@ -92,7 +95,6 @@ package sqlite
 			
 			sendData(sqlString);
 		}
-		
 			
 		public function getTuples(latitude:Number, longitude:Number,
 			startDate:Date, endDate:Date, resource:String="energy",distanceMeters:Number=100):void{
@@ -104,9 +106,6 @@ package sqlite
 			
 			sendData(sqlString); 
 		}
-		
-		
-		
 	}
 }
 
