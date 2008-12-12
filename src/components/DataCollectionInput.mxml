@@ -43,13 +43,18 @@
 			
 			[Bindable ]
 			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",5000);
+			public function get gpsData():Object{ return _gpsSensor.currentData};
 			[Bindable]
 			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
+			public function get arduinoData():Object{ return _gpsSensor.currentData}
 			
-			protected var _sqlLiteHandler:SQLiteHandler = new SQLiteHandler("127.0.0.1",6000);
+			protected var _sqlLiteHandler:SQLiteHandler = SQLiteHandler.instance;
 			
 			protected function init():void{
-				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, function(e:Event):void{gpsLabel.text = _gpsSensor.currentData as String;}); 
+				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, 
+					function(e:Event):void{
+						gpsLabel.text = gpsData['latitude'] + " " + gpsData['longitude'];
+					}); 
 			}
 			
 			protected function recordManual():void{
@@ -70,7 +75,8 @@
 				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
 				
 				//debug
-				_sqlLiteHandler.getTuples(_gpsSensor.currentData.latitude,_gpsSensor.currentData.longitude,new Date(2007,12,5),_date); 
+				_sqlLiteHandler.getTuples((gpsData && gpsData.latitude?gpsData.latitude:undefined),
+					(gpsData && gpsData.longitude?gpsData.longitude:undefined),new Date(2007,12,5),_date); 
 			}
 			
 			

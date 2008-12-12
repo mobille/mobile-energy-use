@@ -11,6 +11,8 @@ package sqlite
 	
 	public class SQLiteHandler extends EventDispatcher
 	{
+		private var DEFAULT_SOCKET:String = "127.0.0.1";
+		private var DEFAULT_PORT:int = 6000;
 		private var TABLE_NAME:String = "Mobile_Reading";
 		private var BAD_METER_DEGREE_CONVERSION:Number = 1/111000;
 		
@@ -18,10 +20,17 @@ package sqlite
 		protected var _socketName:String;
 		protected var _socketPort:Number;
 		public var _socket:XMLSocket;
+
+		protected static const _instance:SQLiteHandler = new SQLiteHandler(SQLHSingletonLock);
+		public static function get instance():SQLiteHandler{return _instance;} 
 		
-		public function SQLiteHandler(socket:String,port:Number){
-			_socketName = socket;
-			_socketPort = port;
+		public function SQLiteHandler(lock:Class){
+			super();
+			if(lock != SQLHSingletonLock){
+				throw new Error("SQLiteHandler is a singleton. Use SQLiteHandler.instance in lieu of SQLiteHandler()");
+			}
+			_socketName = DEFAULT_SOCKET;
+			_socketPort = DEFAULT_PORT;
 
 			_socket = new XMLSocket();
 			_socket.addEventListener(DataEvent.DATA,updateData);
@@ -29,10 +38,15 @@ package sqlite
 			_socket.addEventListener(Event.CLOSE, handleSocketEvent);
 			_socket.addEventListener(IOErrorEvent.IO_ERROR, handleSocketEvent);
 			_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, handleSocketEvent);
-			_socket.connect(_socketName,_socketPort);	
+			_socket.connect(_socketName,_socketPort);
 		}
 		
+		
+		
 		protected function updateData(de:DataEvent):void{
+			Alert.show("Event:" + de.toString() + 
+				"\nTarget:" + de.currentTarget.toString());
+			
 			if(de.data){
 				//TODO: May need to do some additional processing here before returning it
 				this.dispatchEvent(de);
@@ -41,7 +55,7 @@ package sqlite
 		
 		protected function handleSocketEvent(e:Event):void{
 			Alert.show("Event:" + e.toString() + 
-				"\nTarget:" + e.currentTarget.toString() );
+				"\nTarget:" + e.currentTarget.toString());
 		}
 		
 		/**
@@ -81,14 +95,22 @@ package sqlite
 		
 			
 		public function getTuples(latitude:Number, longitude:Number,
-			startDate:Date, endDate:Date, resource="energy",distanceMeters:Number=100):void{
+			startDate:Date, endDate:Date, resource:String="energy",distanceMeters:Number=100):void{
 			var distanceDegrees:Number = distanceMeters * BAD_METER_DEGREE_CONVERSION; 
-			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME + " WHERE resource = " + resource + " AND "
+			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME + " WHERE resource = " + resource + " AND " +
 				"latitude BETWEEN " + (latitude - distanceDegrees) + " AND " + (latitude + distanceDegrees) + " AND " + 
 				"longitude BETWEEN " + (longitude - distanceDegrees) + " AND " + (longitude + distanceDegrees) + " AND " +
 				"datetime BETWEEN " + startDate.valueOf() + " AND " + endDate.valueOf();
 			
 			sendData(sqlString); 
 		}
+		
+		
+		
 	}
+}
+
+//A Private class accessible only to SQLiteHandler - prevents outside instantiation.
+class SQLHSingletonLock
+{
 }

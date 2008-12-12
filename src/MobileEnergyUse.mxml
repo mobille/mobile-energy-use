@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" 
-	xmlns:flex="flare.flex.*" width="800" height="400" 
+	xmlns:flex="flare.flex.*" width="800" height="425" 
 	horizontalScrollPolicy="off" verticalScrollPolicy="off"
 	currentState="LineChartState" xmlns:local="*" xmlns:components="components.*" 
 	backgroundGradientAlphas="[1.0, 1.0]" backgroundGradientColors="[#000000, #000000]" 
@@ -19,6 +19,8 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import sensing.Sensor;
+			import sqlite.SQLiteHandler;
 			import flare.data.DataSchema;
 			import commentspace.etc.WebAPIEvent;
 			import commentspace.etc.WebAPI;
@@ -60,10 +62,13 @@
 		
 			//local vars
 			protected var _webAPI:WebAPI = new WebAPI();
+			protected var _localDB:SQLiteHandler = SQLiteHandler.instance;
 			protected var _vis:Visualization;
 			
-			protected var _selectedDateRange:Array = [ {rangeStart: new Date("4/01/2008"), 
-							rangeEnd: new Date("4/03/2008")}];
+			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/12/2007"), 
+							rangeEnd: new Date("12/13/2007")}];
+			protected var _currentLocation:Object;
+
 
 			/** 
 			 * Toggles between main vis states
@@ -78,7 +83,16 @@
 				_webAPI.converter = "json";
 				_webAPI.addEventListener(WebAPIEvent.QUERY_COMPLETE, handleData);
 				
+				//Listen for changes to the calendar to set the date range
 				_dateChooser.addEventListener(CalendarLayoutChangeEvent.CHANGE,selectDate);
+				
+				//listen for events from the datapane to get sensor updates.
+				dataPane.addEventListener(Sensor.DATA_CHANGED, function(e:Event):void{
+						
+					}); 
+				
+				
+				
 			}		
 			
 			
@@ -140,21 +154,35 @@
 				clearVisualization();
 				_vis.x = 80;
 				_vis.y = 10;
-				_vis.setAspectRatio(2.4,700);	
+				_vis.setAspectRatio(2.2,700);
+				_vis.data.createEdges("data.date","data.building");	
 						
 				//Operators
 				_vis.operators.add(new AxisLayout("data.date","data.rate"));
+				(_vis.operators[0] as AxisLayout).xScale.scaleType = "linear";
 				(_vis.operators[0] as AxisLayout).yScale.scaleType = "linear";
 				(_vis.operators[0] as AxisLayout).yScale.zeroBased = true;
+				
+				//Controls
+				_vis.controls.add(new TooltipControl(NodeSprite,null,updatePlotTip,updatePlotTip));
 								
 				//Defaults
-				_vis.data.nodes.setDefault("shape","verticalBar");
+				//_vis.data.nodes.setDefault("shape","verticalBar");
 				_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
 				_vis.data.nodes.setDefault("lineAlpha",0);
+				_vis.data.nodes.setDefault("size",0.5);
+				_vis.data.edges.setDefault("lineWidth",3);
+				_vis.data.edges.setDefault("lineAlpha",0.8);
 				
 				loadLineData();
 			}
 			
+			protected function updatePlotTip(e:TooltipEvent):void{
+				TextSprite(e.tooltip).htmlText = Strings.format(
+					"<b>{0}</b> - {1}",
+					e.node.data["date"],
+					e.node.data["rate"]);
+			}
 			
 			protected function clearVisualization():void{
 				//Data
@@ -178,7 +206,9 @@
 				public const RESOURCE_TYPES:Array = [{label:"Energy",data:"energy"},
 				{label:"Steam",data:"steam"},
 				{label:"Water",data:"water"}];
-				public const BUILDING_NAMES:Array = [{label:"Cory Hall",data:55},
+				public const BUILDING_NAMES:Array = [
+					{label:"Mobile Data",data:-1},
+					{label:"Cory Hall",data:55},
 					{label:"Koshland Hall",data:142},
 					{label:"Life Sciences Addition",data:24},
 					{label:"Silver Lab Addition",data:160},
@@ -243,17 +273,22 @@
 			
 			
 			protected function loadLineData():void{
-
-				//_webAPI.url = "http://dashboard.berkeley.edu/query/"+_buildingCombo.selectedItem.data+"/"
-				//	+ ((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy") + "/"
-				//	+ formatDateRangeForQuery(_selectedDateRange) + "csv/";
-				_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/readings.json?"+
-					"building={0}&resource={1}&startdate={2}&enddate={3}", 
-					_buildingCombo.selectedItem.data,
-					((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy"),
-					formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
-					formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
-				_webAPI.runQuery();		
+				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
+					if(dataPane.gpsData){
+						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange.rangestart, 
+							_selectedDateRange.rangeend,_resourceCombo.selectedItem.data, Math.pow(10,distanceSlider.value));
+					}
+					
+				}
+				else{ //load from web database
+					_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/readings.json?"+
+						"building={0}&resource={1}&startdate={2}&enddate={3}", 
+						_buildingCombo.selectedItem.data,
+						((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.data:"energy"),
+						formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
+						formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
+					_webAPI.runQuery();
+				}
 			}
 			
 			protected function loadMapData():void{
@@ -269,6 +304,7 @@
 				for each(var o:Object in d.nodes.data){
 					_vis.data.addNode(o);
 				} 
+				_vis.data.createEdges("data.date");	
 				updateVis();
 			}
 			
@@ -279,6 +315,11 @@
 				}
 			}
 			
+			protected function showDistanceBox(value:Boolean):void{
+				distanceBox.includeInLayout = value;
+				distanceBox.visible = value;
+			}
+			
 			
 		]]>
 	</mx:Script>
@@ -287,10 +328,16 @@
 		<mx:HBox width="100%">
 			<mx:Spacer/>
 			<mx:Button label="Map" labelPlacement="top" id="visToggleButton" click="{toggleState()}"/>
-			<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" valueCommit="{loadLineData()}"/>
-			<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" valueCommit="{loadLineData()}"/>
-			<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" valueCommit="{loadLineData()}"/>
-			<mx:DateField id="_dateChooser" showToday="true"/>
+			<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" 
+				change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadLineData()}"/>
+			<mx:HBox id="distanceBox" visible='false' includeInLayout="false">
+				<mx:Label text="Distance"/>
+				<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
+					tickInterval="1" change="{loadLineData()}"/>
+			</mx:HBox>
+			<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" change="{loadLineData()}"/>
+			<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" change="{loadLineData()}"/>
+			<mx:DateField id="_dateChooser" showToday="true" width="17"/>
 		</mx:HBox>
 		<components:ControlContainer panelName="^">
 			<components:subComponents>
