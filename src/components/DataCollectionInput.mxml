@@ -87,7 +87,8 @@
 	<mx:RadioButton label="Manual Entry" groupName="sourceGroup" id="radiobutton1" value="ManualEntryState" x="10" y="23"/>
 	<mx:RadioButtonGroup id="sourceGroup" change="{currentState = sourceGroup.selectedValue as String}"/>
 	<mx:Label text="{_date.toTimeString()}"  x="169" y="0"/>
-	<mx:Label id="gpsLabel" text="{_gpsSensor.currentData?_gpsSensor.currentData:'No GPS Data Available'}" color="#DDDDDD" x="169" y="23"/>
+	<mx:Label id="gpsLabel" text="{_gpsSensor.currentData?_gpsSensor.currentData:'No GPS Data Available'}" 
+		click="{_gpsSensor.sendData(Math.random().toString())}" color="#DDDDDD" x="169" y="23"/>
 	<mx:VRule x="154" y="5" width="1" height="40"/>
 	
 </mx:Canvas>
