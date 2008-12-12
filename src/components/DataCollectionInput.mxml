@@ -64,9 +64,12 @@
 				var t:Object = new Object();
 				t['date'] = _date;
 				if(_gpsSensor.currentData){
-					t['latitude'] = _gpsSensor.currentData.latitude;
-					t['longitude'] = _gpsSensor.currentData.longitude;
-					t['altitude'] = _gpsSensor.currentData.altitude;
+					var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
+					if(gpsArray.length == 3){
+						t['latitude'] = gpsArray[0];
+						t['longitude'] = gpsArray[1];
+						t['altitude'] = gpsArray[2];
+					}
 				}	
 				t['sensorName'] = resourceCombo.selectedItem.toString();
 				t['units'] = unitsCombo.selectedItem.toString();
@@ -80,8 +83,9 @@
 				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
 				
 				//debug
-				_sqlLiteHandler.getTuples((gpsData && gpsData.latitude?gpsData.latitude:undefined),
-					(gpsData && gpsData.longitude?gpsData.longitude:undefined),new Date(2007,12,5),_date); 
+				if(_gpsSensor.currentData)	var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
+				_sqlLiteHandler.getTuples((gpsArray && gpsArray.length == 3?gpsArray[0]:undefined),
+					(gpsArray && gpsArray.length == 3?gpsArray[1]:undefined),new Date(2007,12,5),_date); 
 			}
 			
 			
