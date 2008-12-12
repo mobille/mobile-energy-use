@@ -44,7 +44,7 @@
 			protected var _date:Date = new Date();
 			
 			[Bindable ]
-			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",6000);
+			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",5000);
 			public function get gpsData():Object{ return _gpsSensor.currentData};
 			[Bindable]
 			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
@@ -79,7 +79,6 @@
 			}
 			
 			protected function recordSensors():void{
-				Alert.show("Button pressed - now send to socket");
 				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
 				
 				//debug

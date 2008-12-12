@@ -12,7 +12,7 @@ package sqlite
 	public class SQLiteHandler extends EventDispatcher
 	{
 		private var DEFAULT_SOCKET:String = "127.0.0.1";
-		private var DEFAULT_PORT:int = 5000;
+		private var DEFAULT_PORT:int = 6000;
 		private var TABLE_NAME:String = "Mobile_Reading";
 		private var BAD_METER_DEGREE_CONVERSION:Number = 1/111000;
 		
