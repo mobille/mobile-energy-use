@@ -50,8 +50,14 @@
 		</components:subComponents>
 	</components:ControlContainer>
 	
+	<mx:Canvas id="noDataLabel" horizontalCenter="0" verticalCenter="0">
+		<mx:Label text="No Data Available"  fontSize="36" fontWeight="bold" color="#245CFC" horizontalCenter="0"/>
+		<mx:Label text="Try a Different Resource, Location, or Time Period"   color="#245CFC" y="40" horizontalCenter="0" fontSize="14"/>
+	</mx:Canvas>
+	
 	<mx:Script>
 		<![CDATA[
+			import flare.scale.ScaleType;
 			import flare.util.Strings;
 			import sensing.Sensor;
 			import sqlite.SQLiteHandler;
@@ -138,26 +144,22 @@
 				_vis.x = 0;
 				
 				var ml:MapLayout = new MapLayout();
-				ml.xField = "data.lat";
-				ml.yField = "data.lon";
+				
+				ml.xField = "data.latitude";
+				ml.yField = "data.longitude";
 				ml.desaturated = true;
 				_vis.operators.add(ml);
 				updateVis();
+				
 				ml.xScale.preferredMin = -122.2650;
 				ml.xScale.preferredMax = -122.2439;
 				ml.yScale.preferredMin = 37.870;
 				ml.yScale.preferredMax = 37.882;
-				
 
 				//Controls
-				var mlc:MapLayoutPanZoomControl = new MapLayoutPanZoomControl();
-				mlc.useControls = true;
-				_vis.controls.add(mlc);
-				
 				var ttc:TooltipControl  = new TooltipControl(NodeSprite,null,updateMapTip,updateMapTip);
 				TextSprite(ttc.tooltip).text = "Tooltip Text";
 				_vis.controls.add(ttc);
-				
 				
 				//Defaults
 				_vis.data.nodes.setProperty("alpha",0.5);
@@ -237,11 +239,18 @@
 				
 			}
 			
+			
+			
+			//------------------------------Query Tools----------------------------------
+						
+			[Embed("assets/phone.png")]
+            private var mobileIcon:Class;
+			
 				public const RESOURCE_TYPES:Array = [{label:"Energy Use",data:"energy"},
 				{label:"Steam Use",data:"steam"},
 				{label:"Water Use",data:"water"}];
 				public const BUILDING_NAMES:Array = [
-					{label:"Mobile Data",data:-1},
+					{label:"This Area (Mobile)",data:-1, icon:mobileIcon},
 					{label:"Cory Hall",data:55},
 					{label:"Koshland Hall",data:142},
 					{label:"Life Sciences Addition",data:24},
@@ -250,8 +259,7 @@
 					{label:"Tan Hall",data:153},
 					{label:"Wurster Hall",data:143}];
 				public const DATE_RANGES:Array = ["Daily","Weekly","Yearly","All Time"];
-				
-				
+							
 				
 				protected var _currentDate:Date = new Date();
 				[Bindable]
@@ -317,6 +325,16 @@
 			 * 
 			 */
 			protected function loadData():void{
+				//hide the "No Data" label
+				noDataLabel.visible = false;
+				
+				//call the loading function appropriate to the current state
+				if(currentState == "LineChartState") loadLineData();
+				else if(currentState == "LineChartState")loadMapData();
+				else return;
+			}
+			
+			protected function loadLineData():void{
 				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
 					if(dataPane.gpsData){
 						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange.rangestart, 
@@ -335,6 +353,20 @@
 				}
 			}
 			
+			protected function loadMapData():void{
+				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
+					if(dataPane.gpsData){
+						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange.rangestart, 
+							_selectedDateRange.rangeend,_resourceCombo.selectedItem.data, Math.pow(10,distanceSlider.value));
+					}
+					
+				}
+				else{ //load from web database
+					_webAPI.url = "http://voicebox.eecs.berkeley.edu:8090/energydb/current.json";
+					_webAPI.runQuery();
+				}
+			}
+			
 			protected function formatDateForQuery(date:Date):String{
 				return (date.fullYear + "-" + (date.monthUTC < 9?"0":"") + (date.monthUTC+1) + 
 						"-" + (date.dateUTC < 9?"0":"") + date.dateUTC);
@@ -349,6 +381,11 @@
 				for each(var o:Object in d.nodes.data){
 					_vis.data.addNode(o);
 				} 
+				
+				//If no data was returned, display the no data label
+				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
+				
+				//Create edges for line chart if necessary
 				_vis.data.createEdges("data.date");	
 				updateVis();
 			}

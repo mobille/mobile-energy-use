@@ -36,9 +36,12 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import flare.util.Maths;
 			import mx.controls.Alert;
 			import sqlite.SQLiteHandler;
 			import sensing.Sensor;
+			
+			public const DEVICE_ID:int = 987654321; //TODO: Should actually be device independent
 			
 			[Bindable]
 			protected var _date:Date = new Date();
@@ -52,6 +55,10 @@
 			
 			protected var _sqlLiteHandler:SQLiteHandler = SQLiteHandler.instance;
 			
+			//FIXME:Need to generate a new session id each time a recording action is started
+			protected var _currentSessionId:int = int(Math.random()*100000);
+			
+			
 			protected function init():void{
 				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, 
 					function(e:Event):void{
@@ -61,23 +68,27 @@
 			
 			protected function recordManual():void{
 				var t:Object = new Object();
-				t['date'] = _date;
-				if(_gpsSensor.currentData){
-					var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
-					if(gpsArray.length == 3){
-						t['latitude'] = gpsArray[0];
-						t['longitude'] = gpsArray[1];
-						t['altitude'] = gpsArray[2];
-					}
-				}	
-				t['sensorName'] = resourceCombo.selectedItem.toString();
-				t['units'] = unitsCombo.selectedItem.toString();
-				t['value'] = valueText.text;  			
-				_sqlLiteHandler.sendTuple(t);
+				if(valueText.text.length >= 1){
+					t['date'] = _date;
+					if(_gpsSensor.currentData){
+						var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
+						if(gpsArray.length == 3){
+							t['latitude'] = gpsArray[0];
+							t['longitude'] = gpsArray[1];
+							t['altitude'] = gpsArray[2];
+						}
+					}	
+					t['sensorName'] = (resourceCombo.selectedItem.toString());
+					t['deviceId'] = DEVICE_ID;
+					t['sessionId'] = _currentSessionId;
+					t['units'] = unitsCombo.selectedItem.toString();
+					t['value'] = parseInt(valueText.text);  			
+					_sqlLiteHandler.sendTuple(t);
+				}
 			}
 			
 			protected function recordSensors():void{
-				//TODO:Implement and set up so taht record is called repeatedly when updated sensor values arrive.
+				//TODO:Implement and set up so tht record is called repeatedly when updated sensor values arrive.
 				
 				//debug
 				if(_gpsSensor.currentData)	var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
