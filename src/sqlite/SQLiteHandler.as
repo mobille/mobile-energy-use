@@ -100,10 +100,10 @@ package sqlite
 		public function getTuples(latitude:Number, longitude:Number,
 			startDate:Date, endDate:Date, resource:String=null,distanceMeters:Number=100):void{
 			var distanceDegrees:Number = distanceMeters * MobileEnergyUse.METERS_TO_DEGREES_BAD_CONVERSION; 
-			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME + " WHERE " + (resource?"resource = '" + resource + "' AND ":"") +
+			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME + " WHERE " + (resource?"sensorName = '" + resource + "' AND ":"") +
 				"latitude BETWEEN " + (latitude - distanceDegrees) + " AND " + (latitude + distanceDegrees) + " AND " + 
 				"longitude BETWEEN " + (longitude - distanceDegrees) + " AND " + (longitude + distanceDegrees) + " AND " +
-				"datetime BETWEEN " + startDate.valueOf() + " AND " + endDate.valueOf() +
+				"date BETWEEN " + startDate.valueOf() + " AND " + endDate.valueOf() +
 				" ORDER BY randomKey LIMIT " + RESPONSE_LIMIT;
 			
 			sendData(sqlString); 
