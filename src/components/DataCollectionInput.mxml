@@ -48,7 +48,20 @@
 			
 			[Bindable ]
 			protected var _gpsSensor:Sensor = new Sensor("127.0.0.1",5000);
-			public function get gpsData():Object{ return _gpsSensor.currentData};
+			public function get gpsData():Object{
+				var gpsData:Object;
+				if(_gpsSensor.currentData){
+					var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
+					if(gpsArray.length == 3){
+						gpsData = new Object();
+						gpsData['latitude'] = gpsArray[0];
+						gpsData['longitude'] = gpsArray[1];
+						gpsData['altitude'] = gpsArray[2];
+					}
+				}
+				return gpsData;
+				
+			}
 			[Bindable]
 			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
 			public function get arduinoData():Object{ return _gpsSensor.currentData}
@@ -70,13 +83,11 @@
 				var t:Object = new Object();
 				if(valueText.text.length >= 1){
 					t['date'] = _date;
-					if(_gpsSensor.currentData){
-						var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
-						if(gpsArray.length == 3){
-							t['latitude'] = gpsArray[0];
-							t['longitude'] = gpsArray[1];
-							t['altitude'] = gpsArray[2];
-						}
+					var g:Object = gpsData;
+					if(g){
+						t['latitude'] = g['latitude'];
+						t['longitude'] = g['longitude'];
+						t['altitude'] = g['altitude'];
 					}	
 					t['sensorName'] = (resourceCombo.selectedItem.toString());
 					t['deviceId'] = DEVICE_ID;

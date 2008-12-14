@@ -26,8 +26,7 @@
 		</mx:State>
 	</mx:states>
 	
-	<flex:FlareVis id="_flexVisWrapper" y="35" width="100%" height="100%">
-	</flex:FlareVis>	
+	<flex:FlareVis id="_flexVisWrapper" y="35" width="100%" height="100%"/>
 	
 	<mx:HBox width="100%" verticalAlign="middle" y="0" id="hbox1">
 		<mx:Spacer/>
@@ -37,15 +36,18 @@
 		<mx:Label text="in" fontSize="17" fontWeight="bold" color="#000000" id="inLabel"/>
 		<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" selectedIndex="1"
 			change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData();}"/>
-		<mx:HBox id="distanceBox" visible='false' includeInLayout="false">
-			<mx:Label text="Distance" fontSize="17"/>
-			<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
-				tickInterval="1" change="{loadData()}"/>
-		</mx:HBox>
 		<mx:Label text="{dateForTop(_selectedDateRange[0])}" fontSize="17" fontWeight="bold" color="#000000" click="{_dateChooser.open()}" id="label1"/>
 		<mx:DateField id="_dateChooser"  width="17" displayedYear="2007" displayedMonth="12"/>
 	</mx:HBox>
-
+	
+	<mx:HBox id="distanceBox"  y="37" right="150" backgroundColor="#245CFC" borderColor="#5E5E5E" 
+		borderStyle="solid" cornerRadius="5" paddingBottom="5" paddingLeft="5" paddingRight="5" 
+		paddingTop="5" x="332" backgroundAlpha="0.9" includeInLayout="false" visible="false">
+		<mx:Label text="{'(Showing data from within '+ Math.round(Math.pow(10,distanceSlider.value)) + 'm)'} " color="#FFFFFF" fontSize="17"/>
+		<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
+			tickInterval="1" change="{loadData()}" scaleX="1.5" scaleY="1.5" dataTipFormatFunction="distanceBoxDataTip"/>
+	</mx:HBox>	
+	
 	<mx:Button label="Map" labelPlacement="right" id="visToggleButton" click="{toggleState()}" y="37" right="3" alpha="0.9"/>
 
 	<components:ControlContainer width="100%" bottom="0">
@@ -435,11 +437,15 @@
 			
 			protected function recenterMap():void{
 				//TODO:remove these defaults				
-				var lat:Number = 37.875056;
-				var lon:Number = -122.257538;
+				var lat:Number = 37.874723;
+				var lon:Number = -122.257490;
 				var defaultRadius:Number = 0.0005;
 				if(_buildingCombo.selectedItem.data == -1){
-					//get GPS coordinates
+					var d:Object = dataPane.gpsData;
+					if(d){
+						lat = d.latitude;
+						lon = d.longitude;
+					}
 				}
 				else{
 					var data:Object = _buildingCombo.selectedItem;
@@ -468,6 +474,10 @@
 			protected function showDistanceBox(value:Boolean):void{
 				distanceBox.includeInLayout = value;
 				distanceBox.visible = value;
+			}
+			
+			protected function distanceBoxDataTip(value:Number):String{
+				return Math.round(Math.pow(10,value))+'m';
 			}
 			
 			
