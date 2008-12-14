@@ -7,21 +7,22 @@
 	
 	<mx:states>
 		<mx:State name="MapState" enterState="{loadData(true)}">
-			<mx:SetProperty target="{visToggleButton}" name="label" value="Line Chart"/>
+			<mx:SetProperty target="{visToggleButton}" name="label" value="Chart View"/>
 			<mx:SetProperty target="{recentLabel}" name="visible" value="true"/>
 			<mx:SetProperty target="{recentLabel}" name="includeInLayout" value="true"/>
 			<mx:SetProperty target="{inLabel}" name="text" value="near"/>
-			<mx:SetProperty target="{label1}" name="visible" value="false"/>
-			<mx:SetProperty target="{_dateChooser}" name="visible" value="false"/>
-			<mx:SetProperty target="{_dateRangeCombo}" name="visible" value="false"/>
-			<mx:SetProperty target="{_dateRangeCombo}" name="includeInLayout" value="false"/>
+			<mx:SetStyle target="{label2}" name="color" value="#B31616"/>
+			<mx:SetEventHandler target="{_buildingCombo}" name="change">
+				<mx:handler>{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData();recenterMap();}</mx:handler>
+			</mx:SetEventHandler>
+			<mx:SetStyle target="{visToggleButton}" name="icon" value="@Embed(source='assets/chart_curve.png')"/>
 		</mx:State>
 		<mx:State name="LineChartState" enterState="{loadData(true)}">
 			<mx:SetStyle target="{_flexVisWrapper}" name="backgroundColor" value="#FFFFFF"/>
 			<mx:SetStyle name="backgroundGradientColors" value="[#FFFFFF, #FFFFFF]"/>
 			<mx:SetStyle target="{hbox1}" name="horizontalGap" value="2"/>
-			<mx:SetProperty target="{_dateRangeCombo}" name="visible" value="true"/>
-			<mx:SetProperty target="{_dateRangeCombo}" name="includeInLayout" value="true"/>
+			<mx:SetProperty target="{visToggleButton}" name="label" value="Map View"/>
+			<mx:SetStyle target="{visToggleButton}" name="icon" value="@Embed(source='assets/map.png')"/>
 		</mx:State>
 	</mx:states>
 	
@@ -30,12 +31,12 @@
 	
 	<mx:HBox width="100%" verticalAlign="middle" y="0" id="hbox1">
 		<mx:Spacer/>
-		<mx:Label text="Recent" fontSize="17" fontWeight="bold" color="#000000" id="recentLabel" includeInLayout="false" visible="false"/>
+		<mx:Label text="Avg" fontSize="17" fontWeight="bold" color="#000000" id="recentLabel" includeInLayout="false" visible="false"/>
 		<mx:ComboBox id="_dateRangeCombo" dataProvider="{_dateRanges}" change="{selectDate()}"/>
 		<mx:ComboBox id="_resourceCombo" dataProvider="{_resourceTypes}" change="{loadData()}"/>
 		<mx:Label text="in" fontSize="17" fontWeight="bold" color="#000000" id="inLabel"/>
 		<mx:ComboBox id="_buildingCombo" dataProvider="{_buildingNames}" selectedIndex="1"
-			change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData()}"/>
+			change="{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData();}"/>
 		<mx:HBox id="distanceBox" visible='false' includeInLayout="false">
 			<mx:Label text="Distance" fontSize="17"/>
 			<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
@@ -45,7 +46,7 @@
 		<mx:DateField id="_dateChooser"  width="17" displayedYear="2007" displayedMonth="12"/>
 	</mx:HBox>
 
-	<mx:Button label="Map" labelPlacement="top" id="visToggleButton" click="{toggleState()}" y="2" right="3"/>
+	<mx:Button label="Map" labelPlacement="right" id="visToggleButton" click="{toggleState()}" y="37" right="3" alpha="0.9"/>
 
 	<components:ControlContainer width="100%" bottom="0">
 		<components:subComponents>
@@ -63,12 +64,13 @@
 	</components:ControlContainer>
 	
 	<mx:Canvas id="noDataLabel" horizontalCenter="0" verticalCenter="0">
-		<mx:Label text="No Data Available"  fontSize="36" fontWeight="bold" color="#245CFC" horizontalCenter="0"/>
-		<mx:Label text="Try a Different Resource, Location, or Time Period"   color="#245CFC" y="40" horizontalCenter="0" fontSize="14"/>
+		<mx:Label text="No Data Available"  fontSize="36" fontWeight="bold" color="#245CFC" horizontalCenter="0" alpha=".8" id="label2"/>
+		<mx:Label text="Try a Different Resource, Location, or Time Period"   color="#245CFC" y="40" horizontalCenter="0" fontSize="14" alpha=".8"/>
 	</mx:Canvas>
 	
 	<mx:Script>
 		<![CDATA[
+			import flare.util.palette.SizePalette;
 			import flare.vis.data.DataSprite;
 			import flare.vis.operator.label.Labeler;
 			import com.modestmaps.mapproviders.yahoo.YahooHybridMapProvider;
@@ -287,9 +289,10 @@
 				
 				//Defaults
 				_vis.data.nodes.setProperty("shape","circle");
-				_vis.data.nodes.setDefault("fillAlpha",0);
-				_vis.data.nodes.setDefault("lineWidth",5);
+				_vis.data.nodes.setDefault("fillAlpha",0.4);
+				_vis.data.nodes.setDefault("lineWidth",3);
 				_vis.data.nodes.setDefault("lineColor",Colors.rgba(50,50,250,200));
+				_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
 				
 				//Controls
 				var ttc:TooltipControl  = new TooltipControl(NodeSprite,null,updateMapTip,updateMapTip);
@@ -301,23 +304,20 @@
 				ml.xField = "data.longitude";
 				ml.yField = "data.latitude";
 				ml.desaturated = true;
-				ml.xScale.preferredMin = -122.2580;
-				ml.xScale.preferredMax = -122.2570;
-				ml.yScale.preferredMin = 37.8745;
-				ml.yScale.preferredMax = 37.8755;
-				
 				_vis.operators.add(ml);
-				_vis.operators.add(new SizeEncoder("data.rate"));
+
+				_vis.operators.add(new SizeEncoder("data.rate",Data.NODES,new SizePalette(5,20)));
 				
 				var lb:Labeler = new Labeler();
 				lb.textFunction = function(d:DataSprite):String{
-					return Strings.format("{0} - {1}",d.data.rate,String(d.data.date).substr(11,5));};
-				lb.textFormat = new TextFormat("Verdana",18,Colors.gray(0),true);
-				lb.xOffset =20;
+					return Strings.format("{0}: {1} {2}",d.data.name, d.data.rate,d.data.units);};
+				lb.textFormat = new TextFormat("Verdana",18,Colors.gray(50),true);
+				lb.xOffset = 30;
 				lb.horizontalAnchor = TextSprite.LEFT;
 				
 				_vis.operators.add(lb);
 				
+				recenterMap();
 				loadData();
 			}
 			
@@ -352,13 +352,13 @@
 			{label:"Water Use",data:"water",index:4}];
 			public const BUILDING_NAMES:Array = [
 				{label:"This Area (Mobile)",data:-1, icon:mobileIcon},
-				{label:"Cory Hall",data:55},
-				{label:"Koshland Hall",data:142},
-				{label:"Life Sciences Addition",data:24},
-				{label:"Silver Lab Addition",data:160},
-				{label:"Soda Hall",data:31},
-				{label:"Tan Hall",data:153},
-				{label:"Wurster Hall",data:143}];
+				{label:"Cory Hall",data:55, latitude:37.875056, longitude :-122.257538 },
+				{label:"Koshland Hall",data:142, latitude:37.873942, longitude:-122.264866},
+				{label:"Life Sciences Addn.",data:24, latitude:37.871421, longitude:-122.26326},
+				{label:"Silver Lab Addn.",data:160, latitude:37.880491, longitude:-122.243907},
+				{label:"Soda Hall",data:31, latitude:37.875611, longitude:-122.258713},
+				{label:"Tan Hall",data:153, latitude:37.873104, longitude:-122.256439},
+				{label:"Wurster Hall",data:143, latitude:37.870564, longitude:-122.254701}];
 			public const DATE_RANGES:Array = ["Daily","Weekly","Yearly","All Time"];
 						
 			
@@ -433,6 +433,32 @@
 						"-" + (date.dateUTC < 9?"0":"") + date.dateUTC);
 			}
 			
+			protected function recenterMap():void{
+				//TODO:remove these defaults				
+				var lat:Number = 37.875056;
+				var lon:Number = -122.257538;
+				var defaultRadius:Number = 0.0005;
+				if(_buildingCombo.selectedItem.data == -1){
+					//get GPS coordinates
+				}
+				else{
+					var data:Object = _buildingCombo.selectedItem;
+					lat = data.latitude;
+					lon = data.longitude;
+				}
+
+				var extent:MapExtent = new MapExtent();
+				_ml.xScale.preferredMin = lon - defaultRadius;
+				_ml.xScale.preferredMax = lon + defaultRadius;
+				_ml.yScale.preferredMin = lat - defaultRadius;
+				_ml.yScale.preferredMax = lat + defaultRadius;
+				
+				extent.west = lon - defaultRadius;
+				extent.east = lon + defaultRadius;
+				extent.south = lat - defaultRadius;
+				extent.north = lat + defaultRadius;
+				_ml.map.setExtent(extent);
+			}
 			
 			protected function updateVis():void{
 				if(_vis) _vis.update();
