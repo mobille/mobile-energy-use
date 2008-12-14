@@ -14,7 +14,6 @@ package sqlite
 		private var DEFAULT_SOCKET:String = "127.0.0.1";
 		private var DEFAULT_PORT:int = 6000;
 		private var TABLE_NAME:String = "Mobile_Reading";
-		private var BAD_METER_DEGREE_CONVERSION:Number = 1/111000;
 		private var RESPONSE_LIMIT:int = 200;
 		
 		
@@ -100,12 +99,12 @@ package sqlite
 			
 		public function getTuples(latitude:Number, longitude:Number,
 			startDate:Date, endDate:Date, resource:String=null,distanceMeters:Number=100):void{
-			var distanceDegrees:Number = distanceMeters * BAD_METER_DEGREE_CONVERSION; 
-			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME;/* + " WHERE " + (resource?"resource = " + resource + " AND ":"") +
+			var distanceDegrees:Number = distanceMeters * MobileEnergyUse.METERS_TO_DEGREES_BAD_CONVERSION; 
+			var sqlString:String = "0,SELECT * FROM " + TABLE_NAME + " WHERE " + (resource?"resource = '" + resource + "' AND ":"") +
 				"latitude BETWEEN " + (latitude - distanceDegrees) + " AND " + (latitude + distanceDegrees) + " AND " + 
 				"longitude BETWEEN " + (longitude - distanceDegrees) + " AND " + (longitude + distanceDegrees) + " AND " +
 				"datetime BETWEEN " + startDate.valueOf() + " AND " + endDate.valueOf() +
-				" ORDER BY randomKey LIMIT " + RESPONSE_LIMIT;*/
+				" ORDER BY randomKey LIMIT " + RESPONSE_LIMIT;
 			
 			sendData(sqlString); 
 		}

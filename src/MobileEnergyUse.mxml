@@ -16,6 +16,7 @@
 				<mx:handler>{showDistanceBox(_buildingCombo.selectedItem.data == -1);loadData();recenterMap();}</mx:handler>
 			</mx:SetEventHandler>
 			<mx:SetStyle target="{visToggleButton}" name="icon" value="@Embed(source='assets/chart_curve.png')"/>
+			<mx:SetEventHandler target="{distanceSlider}" name="change" handler="{loadData();recenterMap()}"/>
 		</mx:State>
 		<mx:State name="LineChartState" enterState="{loadData(true)}">
 			<mx:SetStyle target="{_flexVisWrapper}" name="backgroundColor" value="#FFFFFF"/>
@@ -43,9 +44,9 @@
 	<mx:HBox id="distanceBox"  y="37" right="150" backgroundColor="#245CFC" borderColor="#5E5E5E" 
 		borderStyle="solid" cornerRadius="5" paddingBottom="5" paddingLeft="5" paddingRight="5" 
 		paddingTop="5" x="332" backgroundAlpha="0.9" includeInLayout="false" visible="false">
-		<mx:Label text="{'(Showing data from within '+ Math.round(Math.pow(10,distanceSlider.value)) + 'm)'} " color="#FFFFFF" fontSize="17"/>
-		<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="2" allowTrackClick="true" 
-			tickInterval="1" change="{loadData()}" scaleX="1.5" scaleY="1.5" dataTipFormatFunction="distanceBoxDataTip"/>
+		<mx:Label text="{'(Showing data from within '+ distanceFromSlider(distanceSlider.value) + 'm)'} " color="#FFFFFF" fontSize="17"/>
+		<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="1.301" allowTrackClick="true" 
+			tickInterval="1" change="{loadData()}" scaleX="1.5" scaleY="1.5" dataTipFormatFunction="distanceFromSlider"/>
 	</mx:HBox>	
 	
 	<mx:Button label="Map" labelPlacement="right" id="visToggleButton" click="{toggleState()}" y="37" right="3" alpha="0.9"/>
@@ -117,7 +118,10 @@
 			import flare.vis.Visualization;
 			import flare.vis.data.Data;
 		
-			public const MILLISECONDS_PER_DAY:Number = 24*60*60*1000;
+			public static const MILLISECONDS_PER_DAY:Number = 24*60*60*1000;
+			public static const METERS_TO_DEGREES_BAD_CONVERSION:Number = 1/111000;
+			public static const DEFAULT_MAP_RADIUS_METERS:Number = 60;
+			public static const DEFAULT_MAP_MARGIN_METERS:Number = 20;
 		
 			//local vars
 			protected var _webAPI:WebAPI = new WebAPI();
@@ -216,8 +220,8 @@
 			protected function loadMapData():void{
 				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
 					if(dataPane.gpsData){
-						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange.rangestart, 
-							_selectedDateRange.rangeend,_resourceCombo.selectedItem.data, Math.pow(10,distanceSlider.value));
+						_localDB.getTuples(dataPane.gpsData['latitude'],dataPane.gpsData['longitude'],_selectedDateRange[0].rangeStart, 
+							_selectedDateRange[0].rangeEnd,_resourceCombo.selectedItem.data, distanceFromSlider(distanceSlider.value));
 					}
 					
 				}
@@ -436,33 +440,37 @@
 			}
 			
 			protected function recenterMap():void{
-				//TODO:remove these defaults				
-				var lat:Number = 37.874723;
-				var lon:Number = -122.257490;
-				var defaultRadius:Number = 0.0005;
+								
+				var lat:Number;	var lon:Number;var radius:Number;
+				//center on the current GPS location if looking at mobile data
 				if(_buildingCombo.selectedItem.data == -1){
 					var d:Object = dataPane.gpsData;
 					if(d){
 						lat = d.latitude;
 						lon = d.longitude;
 					}
+					radius = distanceFromSlider(distanceSlider.value);
 				}
+				//otherwise center on the selected building
 				else{
 					var data:Object = _buildingCombo.selectedItem;
 					lat = data.latitude;
 					lon = data.longitude;
+					radius = DEFAULT_MAP_RADIUS_METERS;
 				}
+				radius = (radius + DEFAULT_MAP_MARGIN_METERS) * METERS_TO_DEGREES_BAD_CONVERSION;
+				
 
 				var extent:MapExtent = new MapExtent();
-				_ml.xScale.preferredMin = lon - defaultRadius;
-				_ml.xScale.preferredMax = lon + defaultRadius;
-				_ml.yScale.preferredMin = lat - defaultRadius;
-				_ml.yScale.preferredMax = lat + defaultRadius;
+				_ml.xScale.preferredMin = lon - radius;
+				_ml.xScale.preferredMax = lon + radius;
+				_ml.yScale.preferredMin = lat - radius;
+				_ml.yScale.preferredMax = lat + radius;
 				
-				extent.west = lon - defaultRadius;
-				extent.east = lon + defaultRadius;
-				extent.south = lat - defaultRadius;
-				extent.north = lat + defaultRadius;
+				extent.west = lon - radius;
+				extent.east = lon + radius;
+				extent.south = lat - radius;
+				extent.north = lat + radius;
 				_ml.map.setExtent(extent);
 			}
 			
@@ -476,8 +484,8 @@
 				distanceBox.visible = value;
 			}
 			
-			protected function distanceBoxDataTip(value:Number):String{
-				return Math.round(Math.pow(10,value))+'m';
+			protected function distanceFromSlider(value:Number):Number{
+				return Math.round(Math.pow(10,value));
 			}
 			
 			

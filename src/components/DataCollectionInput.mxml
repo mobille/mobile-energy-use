@@ -73,6 +73,9 @@
 			
 			
 			protected function init():void{
+				//FIXME:Remove dummy data
+				_gpsSensor.data.unshift("37.874723 -122.257490 100");
+				
 				_gpsSensor.addEventListener(Sensor.DATA_CHANGED, 
 					function(e:Event):void{
 						gpsLabel.text = gpsData['latitude'] + " " + gpsData['longitude'];
