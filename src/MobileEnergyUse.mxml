@@ -218,7 +218,11 @@
 					
 				}
 				else{ //load from web database
-					_webAPI.url = "http://voicebox.eecs.berkeley.edu:8090/energydb/current.json";
+					_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/average.json?"+
+						"resource={0}&startdate={1}&enddate={2}", 
+						((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.index:"1"),
+						formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
+						formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
 					_webAPI.runQuery();
 				}
 			}	
@@ -241,7 +245,7 @@
 				//If no data was returned, display the no data label
 				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
 				
-				updateVis();
+				if(d.nodes.data.length > 0) updateVis();
 			}
 			
 			/**
@@ -343,9 +347,9 @@
 			[Embed("assets/phone.png")]
             private var mobileIcon:Class;
 			
-			public const RESOURCE_TYPES:Array = [{label:"Energy Use",data:"energy"},
-			{label:"Steam Use",data:"steam"},
-			{label:"Water Use",data:"water"}];
+			public const RESOURCE_TYPES:Array = [{label:"Energy Use",data:"energy",index:1},
+			{label:"Steam Use",data:"steam",index:5},
+			{label:"Water Use",data:"water",index:4}];
 			public const BUILDING_NAMES:Array = [
 				{label:"This Area (Mobile)",data:-1, icon:mobileIcon},
 				{label:"Cory Hall",data:55},
