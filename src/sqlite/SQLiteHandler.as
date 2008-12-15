@@ -56,7 +56,14 @@ package sqlite
 			if(de.data){
 				try{
 					var jc:JSONConverter = new JSONConverter();
-					_data = jc.parse(de.data,null);	
+					_data = jc.parse(de.data,null);
+						
+					//clean up data and make names consistent with web database 
+					for each(var d:Object in _data){
+						_data['rate'] = _data['value'];
+						_data['name'] = "Mobile Device" + _data['deviceId'];	
+					}
+					
 					Alert.show("Data Parsed: (" + _data.length + ")"+ 
 						"\nTarget:" + de.data.toString());			
 					this.dispatchEvent(de);

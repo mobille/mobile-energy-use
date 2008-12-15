@@ -261,7 +261,7 @@
 			
 			protected function handleLocalData(e:Event):void{
 				var d:Array = e.currentTarget.data;
-				Alert.show("handleLocalData(): " + e.currentTarget.toString()); 
+				Alert.show("handleLocalData(): " + e.currentTarget.data.toString()); 
 				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
 				_vis.data.clear();
 				
