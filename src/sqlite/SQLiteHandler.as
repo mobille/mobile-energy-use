@@ -68,7 +68,7 @@ package sqlite
 							if(dx == 'date') nd[dx]= Strings.format("{0:s}",new Date(d[dx])).replace("T"," ").replace(/-/g,"/");
 							else{
 								if(dx == 'value') nd['rate']=int(d[dx]as Number);
-								if(dx == 'deviceId') nd['name']='Mobile Device '+d[dx];
+								if(dx == 'deviceId') nd['name']='Mobile Device '+d[dx] +"(session " + d['sessionId'] + ")";
 								nd[dx]=d[dx];
 							}
 						}	

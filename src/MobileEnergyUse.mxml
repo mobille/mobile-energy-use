@@ -134,7 +134,7 @@
 			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/14/2007"), 
 							rangeEnd: new Date("12/15/2007")}];
 			protected var _currentLocation:Object;
-			protected var _initialized:Boolean = false;
+			protected var _skipClear:Boolean = false; //used when multiple data loads need to happen without clearing the datalist
 
 			/** 
 			 * Toggles between main vis states
@@ -219,16 +219,17 @@
 			*/
 			protected function loadMapData():void{
 				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
+					_skipClear = true;
 					loadDataLocally();
 				}
-				else{ //load from web database
+				//else{ //load from web database
 					_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/average.json?"+
 						"resource={0}&startdate={1}&enddate={2}", 
 						((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.index:"1"),
 						formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
 						formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
 					_webAPI.runQuery();
-				}
+				//}
 			}	
 			
 			protected function loadDataLocally():void{
@@ -245,29 +246,6 @@
 			protected function handleData(e:Event):void{
 				var d:DataSet = e.currentTarget.data;
 				populateNodes(d.nodes.data);
-				
-				/*
-				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
-				_vis.data.clear();
-				
-				for each(var o:Object in d.nodes.data){
-					_vis.data.addNode(o);
-				} 
-				
-				//DEBUG
-				var dbs:String = _vis.data.nodes.length +" total nodes loaded - the first one reads:";
-				var odb:Object = _vis.data.nodes[0].data;
-				for (var x:Object in odb)dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
-				Alert.show("handleData(): " + dbs); 
-				//DEBUG
-				
-				//Create edges for line chart if necessary
-				if(currentState == "LineChartState")_vis.data.createEdges("data.date");
-				
-				//If no data was returned, display the no data label
-				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
-				
-				if(d.nodes.data.length > 0) updateVis();*/
 			}
 			
 			protected function handleLocalData(e:Event):void{
@@ -277,22 +255,19 @@
 			}
 			
 			protected function populateNodes(d:Array):void{
-				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
-				_vis.data.clear();
+				if(_skipClear) _skipClear = false;
+				else{
+					while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0);
+					while(_vis.data.edges.length > 0)_vis.data.edges.removeAt(0); 	
+					_vis.data.clear();
+				}
 				
 				for each(var o:Object in d){
 					_vis.data.addNode(o);
 				} 
 				
-				//DEBUG
-				var dbs:String = _vis.data.nodes.length +" total nodes loaded - the first one reads:";
-				var odb:Object = _vis.data.nodes[0].data;
-				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
-				Alert.show("handleData(): " + dbs);
-				//DEBUG
-				
-				//Create edges for line chart if necessary
-				if(currentState == "LineChartState")_vis.data.createEdges("data.date",["data.sensorName","data.sessionId"]);
+				//Create edges if necessary
+				_vis.data.createEdges("data.date",["data.name"]);
 				
 				//If no data was returned, display the no data label
 				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
@@ -358,6 +333,8 @@
 				_vis.operators.add(ml);
 
 				_vis.operators.add(new SizeEncoder("data.rate",Data.NODES,new SizePalette(5,20)));
+				_vis.operators.add(new ColorEncoder("data.name",Data.NODES,"fillColor"));
+				_vis.operators.add(new ColorEncoder("data.name",Data.EDGES,"lineColor"));
 				
 				var lb:Labeler = new Labeler();
 				lb.textFunction = function(d:DataSprite):String{
