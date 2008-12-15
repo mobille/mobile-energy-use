@@ -255,7 +255,7 @@
 				//DEBUG
 				var dbs:String = "";
 				var odb:Object = _vis.data.nodes[0].data;
-				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
+				for (var x:Object in odb)dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
 				Alert.show("handleData(): " + dbs); 
 				//DEBUG
 				
@@ -281,7 +281,7 @@
 				var dbs:String = "";
 				var odb:Object = _vis.data.nodes[0].data;
 				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
-				Alert.show("handleData(): " + dbs); 
+				Alert.show("handleData(): " + dbs);
 				//DEBUG
 				
 				//Create edges for line chart if necessary
@@ -354,7 +354,7 @@
 				
 				var lb:Labeler = new Labeler();
 				lb.textFunction = function(d:DataSprite):String{
-					return Strings.format("{0}: {1} {2}",d.data.name, d.data.rate,d.data.units);};
+					return Strings.format("{0}: {1} {2}",d.data.name,d.data.rate,d.data.units);};
 				lb.textFormat = new TextFormat("Verdana",18,Colors.gray(50),true);
 				lb.xOffset = 30;
 				lb.horizontalAnchor = TextSprite.LEFT;
@@ -370,7 +370,7 @@
 			
 			protected function updateMapTip(e:TooltipEvent):void{
 				TextSprite(e.tooltip).htmlText = Strings.format(
-					"<b>{0}</b><br/>{1}: {2} {3}  ",
+					"<b>{0}</b><br/>{1}: {2}",
 					e.node.data["name"],
 					e.node.data["rate"],
 					e.node.data["units"]);

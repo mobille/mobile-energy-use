@@ -1,6 +1,7 @@
 package sqlite
 {
 	import flare.data.converters.JSONConverter;
+	import flare.util.Strings;
 	
 	import flash.events.DataEvent;
 	import flash.events.Event;
@@ -56,14 +57,24 @@ package sqlite
 			if(de.data){
 				try{
 					var jc:JSONConverter = new JSONConverter();
-					_data = jc.parse(de.data,null);
+					var tempData:Array = jc.parse(de.data,null);
+					_data = new Array();	
 						
 					//clean up data and make names consistent with web database 
-					for each(var d:Object in _data){
-						d['rate'] = d['value'];
-						d['date'] = Date.parse(d['value']);
-						d['name'] = "Mobile Device" + d['deviceId'];	
+					
+					for each(var d:Object in tempData){
+						var nd:Object = new Object();
+						for (var dx:String in d){
+							if(dx == 'date') nd[dx]= Strings.format("{0:s}",new Date(d[dx])).replace("T"," ").replace(/-/g,"/");
+							else{
+								if(dx == 'value') nd['rate']=int(d[dx]as Number);
+								if(dx == 'deviceId') nd['name']='Mobile Device '+d[dx];
+								nd[dx]=d[dx];
+							}
+						}	
+						_data.push(nd);
 					}
+					
 					
 					Alert.show("Data Parsed: (" + _data.length + ")"+ 
 						"\nTarget:" + de.data.toString());			
