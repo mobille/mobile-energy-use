@@ -250,7 +250,13 @@
 				for each(var o:Object in d.nodes.data){
 					_vis.data.addNode(o);
 				} 
-				Alert.show("handleData(): " + _vis.data.nodes.data.toString()); //DEBUG
+				
+				//DEBUG
+				var dbs:String = "";
+				var odb:Object = _vis.data.nodes[0].data
+				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + ",");
+				Alert.show("handleData(): " + dbs); 
+				//DEBUG
 				
 				//Create edges for line chart if necessary
 				if(currentState == "LineChartState")_vis.data.createEdges("data.date");
@@ -269,7 +275,13 @@
 				for each(var o:Object in d){
 					_vis.data.addNode(o);
 				} 
-				Alert.show("handleData(): " + _vis.data.nodes.data.toString()); //DEBUG
+				
+				//DEBUG
+				var dbs:String = "";
+				var odb:Object = _vis.data.nodes[0].data
+				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + ",");
+				Alert.show("handleData(): " + dbs); 
+				//DEBUG
 				
 				//Create edges for line chart if necessary
 				//if(currentState == "LineChartState")_vis.data.createEdges("data.date",["data.sensorName","data.sessionId"]);
