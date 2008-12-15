@@ -1,5 +1,7 @@
 package sqlite
 {
+	import flare.data.converters.JSONConverter;
+	
 	import flash.events.DataEvent;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -20,6 +22,10 @@ package sqlite
 		protected var _socketName:String;
 		protected var _socketPort:Number;
 		public var _socket:XMLSocket;
+		
+		//The most recent data returned
+		protected var _data:Array;
+		public function get data():Array { return _data;}
 
 		protected static const _instance:SQLiteHandler = new SQLiteHandler(SQLHSingletonLock);
 		public static function get instance():SQLiteHandler{return _instance;} 
@@ -48,7 +54,8 @@ package sqlite
 				"\nTarget:" + de.currentTarget.toString());
 			
 			if(de.data){
-				//TODO: May need to do some additional processing here before returning it
+				var jc:JSONConverter = new JSONConverter();
+				_data = jc.parse(de.data,null);				
 				this.dispatchEvent(de);
 			}
 		}
@@ -66,7 +73,6 @@ package sqlite
 		public function sendData(s:String):void{
 			if(_socket.connected){
 				_socket.send(s);
-				//Alert.show("Message (\"" + s + "\") sent to " + _socketName + ":" + _socketPort);
 			} 
 			else Alert.show("Socket not connected");
 		}

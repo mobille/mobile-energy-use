@@ -41,13 +41,13 @@
 		<mx:DateField id="_dateChooser"  width="17" displayedYear="2007" displayedMonth="12"/>
 	</mx:HBox>
 	
-	<mx:HBox id="distanceBox"  y="37" right="150" backgroundColor="#245CFC" borderColor="#5E5E5E" 
-		borderStyle="solid" cornerRadius="5" paddingBottom="5" paddingLeft="5" paddingRight="5" 
-		paddingTop="5" x="332" backgroundAlpha="0.9" includeInLayout="false" visible="false">
-		<mx:Label text="{'(Showing data from within '+ distanceFromSlider(distanceSlider.value) + 'm)'} " color="#FFFFFF" fontSize="17"/>
-		<mx:HSlider id="distanceSlider" minimum="0" width="80" maximum="3" value="1.301" allowTrackClick="true" 
-			tickInterval="1" change="{loadData()}" scaleX="1.5" scaleY="1.5" dataTipFormatFunction="distanceFromSlider"/>
-	</mx:HBox>	
+	<mx:Canvas id="distanceBox"  y="35" backgroundColor="#245CFC" borderColor="#5E5E5E" 
+		borderStyle="outset" paddingBottom="5" paddingLeft="5" paddingRight="5" 
+		paddingTop="5" backgroundAlpha="0.9" width="100%" height="35" includeInLayout="false" visible="false">
+		<mx:Label text="{'(Showing data from within '+ distanceFromSlider(distanceSlider.value) + 'm)'} " color="#FFFFFF" fontSize="17" right="450" y="3"/>
+		<mx:HSlider id="distanceSlider" minimum="0.477" width="200" maximum="3" value="1.301" allowTrackClick="true" 
+			tickInterval="1" change="{loadData()}" scaleX="1.5" scaleY="1.5" dataTipFormatFunction="distanceFromSlider" x="350" y="4"/>
+	</mx:Canvas>	
 	
 	<mx:Button label="Map" labelPlacement="right" id="visToggleButton" click="{toggleState()}" y="37" right="3" alpha="0.9"/>
 
@@ -150,6 +150,8 @@
 				_vis = _flexVisWrapper.visualization;
 				_webAPI.converter = "json";
 				_webAPI.addEventListener(WebAPIEvent.QUERY_COMPLETE, handleData);
+				
+				_localDB.addEventListener(DataEvent.DATA,handleLocalData);
 				
 				//Listen for changes to the calendar to set the date range
 				_dateChooser.dropdown.selectedRanges = _selectedDateRange;
@@ -257,6 +259,25 @@
 				if(d.nodes.data.length > 0) updateVis();
 			}
 			
+			protected function handleLocalData(e:Event):void{
+				var d:Array = e.currentTarget.data;
+				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
+				_vis.data.clear();
+				
+				for each(var o:Object in d){
+					_vis.data.addNode(o);
+				} 
+				
+				//Create edges for line chart if necessary
+				if(currentState == "LineChartState")_vis.data.createEdges("data.date",["data.sensorName","data.sessionId"]);
+				
+				//If no data was returned, display the no data label
+				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
+				
+				if(d.nodes.data.length > 0) updateVis();
+				
+			}
+			
 			/**
 			 * Set up the visualization as a line chart.
 			 * 
@@ -335,9 +356,8 @@
 				TextSprite(e.tooltip).htmlText = Strings.format(
 					"<b>{0}</b><br/>{1}: {2} {3}  ",
 					e.node.data["name"],
-					e.node.data["displayName"],
 					e.node.data["rate"],
-					e.node.data["rateUnits"]);
+					e.node.data["units"]);
 			} 
 
 			protected function updatePlotTip(e:TooltipEvent):void{
