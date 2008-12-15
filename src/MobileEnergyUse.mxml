@@ -218,18 +218,17 @@
 			* Loads data for the map view
 			*/
 			protected function loadMapData():void{
-				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
+				if(_buildingCombo.selectedItem.data == -1){ //load from local database (if local selected)
 					_skipClear = 2;
 					loadDataLocally();
 				}
-				//else{ //load from web database
-					_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/average.json?"+
-						"resource={0}&startdate={1}&enddate={2}", 
-						((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.index:"1"),
-						formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
-						formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
-					_webAPI.runQuery();
-				//}
+				//load from web database (always)
+				_webAPI.url = Strings.format("http://voicebox.eecs.berkeley.edu:8090/energydb/average.json?"+
+					"resource={0}&startdate={1}&enddate={2}", 
+					((_resourceCombo.selectedItem)?_resourceCombo.selectedItem.index:"1"),
+					formatDateForQuery(_selectedDateRange[0].rangeStart as Date),
+					formatDateForQuery(_selectedDateRange[0].rangeEnd as Date));
+				_webAPI.runQuery();
 			}	
 			
 			protected function loadDataLocally():void{
@@ -314,10 +313,13 @@
 				
 				//Defaults
 				_vis.data.nodes.setProperty("shape","circle");
-				_vis.data.nodes.setDefault("fillAlpha",0.4);
+				_vis.data.nodes.setDefault("fillAlpha",0);
 				_vis.data.nodes.setDefault("lineWidth",3);
-				_vis.data.nodes.setDefault("lineColor",Colors.rgba(50,50,250,200));
-				_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
+				_vis.data.edges.setDefault("lineWidth",4);
+				_vis.data.edges.setDefault("lineAlpha",0.8);
+				
+				//_vis.data.nodes.setDefault("lineColor",Colors.rgba(50,50,250,200));
+				//_vis.data.nodes.setDefault("fillColor",Colors.rgba(50,50,250,200));
 				
 				//Controls
 				var ttc:TooltipControl  = new TooltipControl(NodeSprite,null,updateMapTip,updateMapTip);
@@ -334,7 +336,7 @@
 				var se:SizeEncoder = new SizeEncoder("data.rate",Data.NODES,new SizePalette(5,20));
 				se.filter = isBuildingPoint;
 				_vis.operators.add(se);
-				_vis.operators.add(new ColorEncoder("data.name",Data.NODES,"fillColor"));
+				_vis.operators.add(new ColorEncoder("data.name",Data.NODES,"lineColor"));
 				_vis.operators.add(new ColorEncoder("data.name",Data.EDGES,"lineColor"));
 				
 				var lb:Labeler = new Labeler();

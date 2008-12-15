@@ -51,9 +51,6 @@ package sqlite
 		
 		
 		protected function updateData(de:DataEvent):void{
-			Alert.show("Event:" + de.toString() + 
-				"\nTarget:" + de.currentTarget.toString());
-			
 			if(de.data){
 				try{
 					var jc:JSONConverter = new JSONConverter();
@@ -74,10 +71,6 @@ package sqlite
 						}	
 						_data.push(nd);
 					}
-					
-					
-					Alert.show("Data Parsed: (" + _data.length + ")"+ 
-						"\nTarget:" + de.data.toString());			
 					this.dispatchEvent(de);
 				}
 				catch(e:Error){
