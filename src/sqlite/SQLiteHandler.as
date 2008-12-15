@@ -55,7 +55,9 @@ package sqlite
 			
 			if(de.data){
 				var jc:JSONConverter = new JSONConverter();
-				_data = jc.parse(de.data,null);				
+				_data = jc.parse(de.data,null);	
+				Alert.show("Data Parsed: (" + _data.length + ")"+ 
+					"\nTarget:" + de.data.toString());			
 				this.dispatchEvent(de);
 			}
 		}
