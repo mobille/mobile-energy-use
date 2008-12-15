@@ -244,7 +244,9 @@
 			 */
 			protected function handleData(e:Event):void{
 				var d:DataSet = e.currentTarget.data;
+				populateNodes(d.nodes.data);
 				
+				/*
 				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
 				_vis.data.clear();
 				
@@ -253,7 +255,7 @@
 				} 
 				
 				//DEBUG
-				var dbs:String = "";
+				var dbs:String = _vis.data.nodes.length +" total nodes loaded - the first one reads:";
 				var odb:Object = _vis.data.nodes[0].data;
 				for (var x:Object in odb)dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
 				Alert.show("handleData(): " + dbs); 
@@ -265,11 +267,16 @@
 				//If no data was returned, display the no data label
 				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
 				
-				if(d.nodes.data.length > 0) updateVis();
+				if(d.nodes.data.length > 0) updateVis();*/
 			}
 			
 			protected function handleLocalData(e:Event):void{
 				var d:Array = _localDB.data;
+				populateNodes(d);
+				
+			}
+			
+			protected function populateNodes(d:Array):void{
 				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
 				_vis.data.clear();
 				
@@ -278,7 +285,7 @@
 				} 
 				
 				//DEBUG
-				var dbs:String = "";
+				var dbs:String = _vis.data.nodes.length +" total nodes loaded - the first one reads:";
 				var odb:Object = _vis.data.nodes[0].data;
 				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
 				Alert.show("handleData(): " + dbs);
@@ -290,7 +297,7 @@
 				//If no data was returned, display the no data label
 				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);
 				
-				if(d.nodes.data.length > 0) updateVis();
+				if(_vis.data.nodes.length > 0) updateVis();
 				
 			}
 			
