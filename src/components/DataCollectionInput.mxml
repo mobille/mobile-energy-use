@@ -20,16 +20,19 @@
 						<mx:SetProperty target="{button1}" name="height" value="60"/>
 				</mx:State>
 				<mx:State name="SensorState">
-						<mx:AddChild relativeTo="{button1}" position="before">
-								<mx:DataGrid showHeaders="false" dataProvider="{_arduinoSensor.currentData}" height="50" width="348" x="348">
-										<mx:columns>
-												<mx:DataGridColumn dataField="resource"/>
-												<mx:DataGridColumn dataField="value"/>
-												<mx:DataGridColumn dataField="units"/>
-										</mx:columns>
-								</mx:DataGrid>
-						</mx:AddChild>
 						<mx:SetEventHandler target="{button1}" name="click" handler="{recordSensors()}"/>
+						<mx:AddChild position="lastChild">
+								<mx:Text x="371" y="0" width="153" id="Resource1" text="Temperature"/>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:Text x="532" y="0" width="146" id="Value1"/>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:Text x="371" y="22" text="Light intensity" width="153" id="Resource2"/>
+						</mx:AddChild>
+						<mx:AddChild position="lastChild">
+								<mx:Text x="532" y="22" width="146" id="Value2"/>
+						</mx:AddChild>
 				</mx:State>
 		</mx:states>
 		<mx:Button label="Record" x="701" y="2" height="48" width="97" id="button1"/>
@@ -40,6 +43,7 @@
 			import mx.controls.Alert;
 			import sqlite.SQLiteHandler;
 			import sensing.Sensor;
+			import sensing.arduinoSensor;
 			
 			public const DEVICE_ID:int = 987654321; //TODO: Should actually be device independent
 			
@@ -62,9 +66,11 @@
 				return gpsData;
 				
 			}
+			
+			
 			[Bindable]
-			protected var _arduinoSensor:Sensor	= new Sensor("127.0.0.1",4000);
-			public function get arduinoData():Object{ return _gpsSensor.currentData}
+			protected var _arduinoSensor:arduinoSensor	= new arduinoSensor("127.0.0.1",7777);
+			public function get arduinoData():Object{ return _arduinoSensor.getData}
 			
 			protected var _sqlLiteHandler:SQLiteHandler = SQLiteHandler.instance;
 			
@@ -80,7 +86,37 @@
 					function(e:Event):void{
 						gpsLabel.text = gpsData['latitude'] + " " + gpsData['longitude'];
 					}); 
+					
+					_arduinoSensor.addEventListener(arduinoSensor.DATA_CHANGED, 
+					function(e:Event):void{
+						
+						if(_arduinoSensor.getData.toString().charAt(0)=='L')
+						{
+						
+						Value2.text= _arduinoSensor.getData.toString().substring(1,_arduinoSensor.getData.toString().length)+" lux";
+						}
+						else {						
+							var temp:String;
+							temp= _arduinoSensor.getData.toString().substring(1,_arduinoSensor.getData.toString().length-1);
+							/*Value1.text=temp.toString()+" C";
+							var k:int;
+							k=temp.lastIndexOf("D"); 
+							temp[k]=".";
+							Value1.text=temp.toString()+" C";*/
+							temp= temp.substring(0,temp.length-1)+".";
+						    temp= temp + _arduinoSensor.getData.toString().charAt(_arduinoSensor.getData.toString().length-1)+" C";
+						    if(temp.lastIndexOf(". C")==-1)
+						    {
+						    Value1.text=temp;
+							}
+						}
+				});
+
+					
+					
 			}
+			
+			
 			
 			protected function recordManual():void{
 				var t:Object = new Object();
@@ -105,9 +141,32 @@
 				//TODO:Implement and set up so tht record is called repeatedly when updated sensor values arrive.
 				
 				//debug
-				if(_gpsSensor.currentData)	var gpsArray:Array = _gpsSensor.currentData.toString().split(" ");
-				_sqlLiteHandler.getTuples((gpsArray && gpsArray.length == 3?gpsArray[0]:undefined),
-					(gpsArray && gpsArray.length == 3?gpsArray[1]:undefined),new Date(2007,12,5),_date); 
+				
+				
+				var t:Object = new Object();
+				
+				t['date'] = _date;
+				var g:Object = gpsData;
+					if(g){
+						t['latitude'] = g['latitude'];
+						t['longitude'] = g['longitude'];
+						t['altitude'] = g['altitude'];
+					}
+				t['deviceId'] = DEVICE_ID;
+				t['sessionId'] = _currentSessionId;
+				t['sensorName'] = Resource1.text;
+				t['units'] = "C";
+				t['value'] = Value1.text;
+				
+				_sqlLiteHandler.sendTuple(t);
+				
+				t['sensorName'] = Resource2.text;
+				t['units'] = "lux";
+				t['value'] = Value2.text; 
+				
+				_sqlLiteHandler.sendTuple(t);
+				
+				
 			}
 			
 			

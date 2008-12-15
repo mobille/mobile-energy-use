@@ -379,6 +379,8 @@
             private var mobileIcon:Class;
 			
 			public const RESOURCE_TYPES:Array = [{label:"Energy Use",data:"energy",index:1},
+			{label:"Temperature",data:"Temperature",index:12},
+			{label:"Light",data:"Light intensity",index:12},
 			{label:"Steam Use",data:"steam",index:5},
 			{label:"Water Use",data:"water",index:4}];
 			public const BUILDING_NAMES:Array = [
