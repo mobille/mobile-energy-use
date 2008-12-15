@@ -61,6 +61,7 @@ package sqlite
 					//clean up data and make names consistent with web database 
 					for each(var d:Object in _data){
 						d['rate'] = d['value'];
+						d['date'] = Date.parse(d['value']);
 						d['name'] = "Mobile Device" + d['deviceId'];	
 					}
 					

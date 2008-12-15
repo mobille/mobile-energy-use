@@ -73,6 +73,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import flash.utils.getQualifiedClassName;
 			import flare.util.palette.SizePalette;
 			import flare.vis.data.DataSprite;
 			import flare.vis.operator.label.Labeler;
@@ -253,8 +254,8 @@
 				
 				//DEBUG
 				var dbs:String = "";
-				var odb:Object = _vis.data.nodes[0].data
-				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + ",");
+				var odb:Object = _vis.data.nodes[0].data;
+				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
 				Alert.show("handleData(): " + dbs); 
 				//DEBUG
 				
@@ -278,8 +279,8 @@
 				
 				//DEBUG
 				var dbs:String = "";
-				var odb:Object = _vis.data.nodes[0].data
-				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + ",");
+				var odb:Object = _vis.data.nodes[0].data;
+				for (var x:Object in odb) dbs += (" " + x + ":" + odb[x] + "(" + getQualifiedClassName(odb[x]) + "),");
 				Alert.show("handleData(): " + dbs); 
 				//DEBUG
 				
