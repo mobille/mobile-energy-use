@@ -268,7 +268,7 @@
 			}
 			
 			protected function handleLocalData(e:Event):void{
-				var d:Array = e.currentTarget.data;
+				var d:Array = _localDB.data;
 				while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0); 	
 				_vis.data.clear();
 				
@@ -284,7 +284,7 @@
 				//DEBUG
 				
 				//Create edges for line chart if necessary
-				//if(currentState == "LineChartState")_vis.data.createEdges("data.date",["data.sensorName","data.sessionId"]);
+				if(currentState == "LineChartState")_vis.data.createEdges("data.date",["data.sensorName","data.sessionId"]);
 				
 				//If no data was returned, display the no data label
 				noDataLabel.visible = (!_vis.data.nodes || _vis.data.nodes.length == 0);

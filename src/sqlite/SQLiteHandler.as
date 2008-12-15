@@ -60,8 +60,8 @@ package sqlite
 						
 					//clean up data and make names consistent with web database 
 					for each(var d:Object in _data){
-						_data['rate'] = _data['value'];
-						_data['name'] = "Mobile Device" + _data['deviceId'];	
+						d['rate'] = d['value'];
+						d['name'] = "Mobile Device" + d['deviceId'];	
 					}
 					
 					Alert.show("Data Parsed: (" + _data.length + ")"+ 
