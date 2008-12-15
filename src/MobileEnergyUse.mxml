@@ -134,7 +134,7 @@
 			protected var _selectedDateRange:Array = [ {rangeStart: new Date("12/14/2007"), 
 							rangeEnd: new Date("12/15/2007")}];
 			protected var _currentLocation:Object;
-			protected var _skipClear:Boolean = false; //used when multiple data loads need to happen without clearing the datalist
+			protected var _skipClear:int = 0; //used when multiple data loads need to happen without clearing the datalist
 
 			/** 
 			 * Toggles between main vis states
@@ -219,7 +219,7 @@
 			*/
 			protected function loadMapData():void{
 				if(_buildingCombo.selectedItem.data == -1){ //load from local database 
-					_skipClear = true;
+					_skipClear = 2;
 					loadDataLocally();
 				}
 				//else{ //load from web database
@@ -255,8 +255,7 @@
 			}
 			
 			protected function populateNodes(d:Array):void{
-				if(_skipClear) _skipClear = false;
-				else{
+				if(!(_skipClear > 0 && _skipClear-- == 1)){ 
 					while(_vis.data.nodes.length > 0)_vis.data.nodes.removeAt(0);
 					while(_vis.data.edges.length > 0)_vis.data.edges.removeAt(0); 	
 					_vis.data.clear();
@@ -332,11 +331,14 @@
 				ml.desaturated = true;
 				_vis.operators.add(ml);
 
-				_vis.operators.add(new SizeEncoder("data.rate",Data.NODES,new SizePalette(5,20)));
+				var se:SizeEncoder = new SizeEncoder("data.rate",Data.NODES,new SizePalette(5,20));
+				se.filter = isBuildingPoint;
+				_vis.operators.add(se);
 				_vis.operators.add(new ColorEncoder("data.name",Data.NODES,"fillColor"));
 				_vis.operators.add(new ColorEncoder("data.name",Data.EDGES,"lineColor"));
 				
 				var lb:Labeler = new Labeler();
+				lb.filter = isBuildingPoint;
 				lb.textFunction = function(d:DataSprite):String{
 					return Strings.format("{0}: {1} {2}",d.data.name,d.data.rate,d.data.units);};
 				lb.textFormat = new TextFormat("Verdana",18,Colors.gray(50),true);
@@ -508,6 +510,8 @@
 			protected function distanceFromSlider(value:Number):Number{
 				return Math.round(Math.pow(10,value));
 			}
+			
+			protected function isBuildingPoint(d:DataSprite):Boolean{return d.data.buildingId?true:false}
 			
 			
 		]]>
